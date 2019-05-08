@@ -2,12 +2,8 @@ import React from 'react';
 import * as ReactDOM from 'react-dom';
 import logo from './logo.svg';
 import './App.css';
+import { Bag } from './Bag';
 import { Board } from './Board';
-import { Piece } from './Piece';
-
-interface IPieceSet {
-    pieces: Piece[]
-}
 
 interface IGame {
     players: Player[]
@@ -17,11 +13,17 @@ var startingPieces = ["Duke", "Footsoldier", "Footsoldier"]
 var initialBagPieces = ["Pikeman", "Arbalist", "Champion"]
 
 export class Player {
+    colour: string;
+    boardPieces: Array<string>;
+    bagPieces: Array<string>;
+    lostPieces: Array<string>;
+
+
     constructor(playerColour: string) {
-        var colour = playerColour;
-        var boardPieces = startingPieces;
-        var bagPieces = initialBagPieces;
-        var lostPieces = [];
+        this.colour = playerColour;
+        this.boardPieces = startingPieces;
+        this.bagPieces = initialBagPieces;
+        this.lostPieces = [];
     }
 }
 
@@ -31,17 +33,27 @@ class Game extends React.Component <{}, IGame> {
         this.state = {
             players: []
         }
+
+        this.createBags = this.createBags.bind(this);
     }
 
-    initiatePlayers() {
+    componentDidMount() {
         var players = new Array<Player>();
-        ["white", "black"].forEach(colour => {
+        ["White", "Black"].forEach(colour => {
             var player = new Player(colour);
             players.push(player);
         });
         this.setState({
             players: players
         });
+    }
+
+    createBags() {
+        var bags = new Array<JSX.Element>();
+        this.state.players.forEach(player => {
+            bags.push(<Bag colour={player.colour} pieces={player.bagPieces}></Bag>);
+        });
+        return <div>{bags}</div>;
     }
 
     render() {
@@ -51,8 +63,7 @@ class Game extends React.Component <{}, IGame> {
                     <Board  players={this.state.players}/>
                 </div>
                 <div className="game-info">
-                    <div>{/* status */}</div>
-                    <ol>{/* TODO */}</ol>
+                    {this.createBags()}
                 </div>
             </div>
         );
