@@ -1,7 +1,11 @@
 import React from 'react';
 import './square.css';
 
-export class Square extends React.Component {
+interface ISquareProps {
+    coordinates: number[]
+}
+
+export class Square extends React.Component <ISquareProps> {
   constructor(props: any) {
     super(props)
   }
@@ -9,7 +13,8 @@ export class Square extends React.Component {
   render() {
 
     return(
-      <button className="square" onClick={() => alert("Button pressed")}>
+      <button className="square" onClick={() => alert(this.props.coordinates)}>
+        {this.props.coordinates}
       </button>
     )
   }
