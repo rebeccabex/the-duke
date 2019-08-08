@@ -3,9 +3,9 @@ export class GamePiece {
     initialMoveSet: MoveSet;
     flippedMoveSet: MoveSet;
     isFlipped: boolean;
-    position: Coordinates;
+    position: BoardCoordinates;
     
-    constructor(name: string, startingPosition: Coordinates) {
+    constructor(name: string, startingPosition: BoardCoordinates) {
         this.name = name;
         this.initialMoveSet = new MoveSet();
         this.flippedMoveSet = new MoveSet();
@@ -15,20 +15,20 @@ export class GamePiece {
 }
 
 export class MoveSet {
-    move: Array<Coordinates> | null;
-    jump: Array<Coordinates> | null;
-    slide: Array<Coordinates> | null;
-    jumpSlide: Array<Coordinates> | null;
-    strike: Array<Coordinates> | null;
-    command: Array<Coordinates> | null;
+    move: Array<BoardCoordinates> | null;
+    jump: Array<BoardCoordinates> | null;
+    slide: Array<BoardCoordinates> | null;
+    jumpSlide: Array<BoardCoordinates> | null;
+    strike: Array<BoardCoordinates> | null;
+    command: Array<BoardCoordinates> | null;
 
     constructor(
-        move?: Array<Coordinates>,
-        jump?: Array<Coordinates>,
-        slide?: Array<Coordinates>,
-        jumpSlide?: Array<Coordinates>,
-        strike?: Array<Coordinates>,
-        command?: Array<Coordinates>,
+        move?: Array<BoardCoordinates>,
+        jump?: Array<BoardCoordinates>,
+        slide?: Array<BoardCoordinates>,
+        jumpSlide?: Array<BoardCoordinates>,
+        strike?: Array<BoardCoordinates>,
+        command?: Array<BoardCoordinates>,
     ) {
         this.move = move ? move : null;
         this.jump = jump ? jump : null;
@@ -39,4 +39,4 @@ export class MoveSet {
     }
 }
 
-type Coordinates = {x: number, y: number};
+export type BoardCoordinates = {x: number, y: number};

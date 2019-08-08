@@ -1,8 +1,11 @@
 import React from 'react';
 import './square.css';
+import { BoardCoordinates, GamePiece } from 'GamePiece';
+import { Tile } from 'Tile';
 
 interface ISquareProps {
-    coordinates: number[]
+    coordinates: BoardCoordinates;
+    piece: GamePiece | null;
 }
 
 export class Square extends React.Component <ISquareProps> {
@@ -13,9 +16,9 @@ export class Square extends React.Component <ISquareProps> {
   render() {
 
     return(
-      <button className="square" onClick={() => alert(this.props.coordinates)}>
-        {this.props.coordinates}
-      </button>
+      this.props.piece
+      ? <Tile piece={this.props.piece}/>
+      : <div className="square">{this.props.coordinates.x + "," + this.props.coordinates.y}</div>
     )
   }
 }

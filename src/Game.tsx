@@ -1,23 +1,26 @@
 import React from 'react';
 import * as ReactDOM from 'react-dom';
-import logo from './logo.svg';
 import './App.css';
 import { Bag } from './Bag';
 import { Board } from './Board';
+import { GamePiece } from 'GamePiece';
 
 interface IGame {
     players: Player[]
 }
 
-var startingPieces = ["Duke", "Footsoldier", "Footsoldier"]
-var initialBagPieces = ["Pikeman", "Arbalist", "Champion"]
+var duke = new GamePiece("Duke", {x: 5, y: 2});
+var footsoldier1 = new GamePiece("Footsoldier", {x: 5, y: 3});
+var footsoldier2 = new GamePiece("Footsoldier", {x: 4, y: 2});
+
+var startingPieces = [duke, footsoldier1, footsoldier2]
+var initialBagPieces = new Array();
 
 export class Player {
     colour: string;
-    boardPieces: Array<string>;
-    bagPieces: Array<string>;
-    lostPieces: Array<string>;
-
+    boardPieces: Array<GamePiece>;
+    bagPieces: Array<GamePiece>;
+    lostPieces: Array<GamePiece>;
 
     constructor(playerColour: string) {
         this.colour = playerColour;
@@ -60,7 +63,7 @@ class Game extends React.Component <{}, IGame> {
         return (
             <div className="game">
                 <div className="game-board">
-                    <Board  players={this.state.players}/>
+                    <Board players={this.state.players}/>
                 </div>
                 <div className="game-info">
                     {this.createBags()}

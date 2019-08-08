@@ -1,9 +1,10 @@
 import React from 'react';
 import { render } from 'react-dom';
+import { GamePiece } from 'GamePiece';
 
 interface IBagProps {
     colour: string,
-    pieces: string[]
+    pieces: GamePiece[]
 }
 
 export class Bag extends React.Component <IBagProps> {
