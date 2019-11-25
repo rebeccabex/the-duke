@@ -6,19 +6,23 @@ import { Tile } from 'Tile';
 interface ISquareProps {
     coordinates: BoardCoordinates;
     piece: GamePiece | null;
+    selected: boolean;
+    highlighted: boolean;
+    clickSquare: (coordinates: BoardCoordinates) => any;
 }
 
-export class Square extends React.Component <ISquareProps> {
-  constructor(props: any) {
-    super(props)
-  }
+export const Square = (props: ISquareProps) => {
+  const clickThisSquare = (): any => {
+    props.clickSquare(props.coordinates);
+  };
 
-  render() {
-
-    return(
-      this.props.piece
-      ? <Tile piece={this.props.piece}/>
-      : <div className="square">{this.props.coordinates.x + "," + this.props.coordinates.y}</div>
-    )
-  }
+  return (
+    props.piece
+    ? <Tile piece={props.piece} selected={props.selected} />
+    : props.highlighted
+      ? <button className="square-highlighted" onClick={clickThisSquare}>
+          {props.coordinates.x + "," + props.coordinates.y}
+        </button>
+      : <div className="square-plain">{props.coordinates.x + "," + props.coordinates.y}</div>
+  )
 }

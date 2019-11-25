@@ -4,16 +4,13 @@ import './square.css';
 
 interface ITileProps {
     piece: GamePiece;
+    selected: boolean,
 }
 
-export class Tile extends React.Component <ITileProps> {
-    constructor(props: any) {
-        super(props)
-    }
-
-    render() {
-        return(
-            <button className="square">{this.props.piece.name}</button>
-        )
-    }
+export const Tile = (props: ITileProps) => {
+    return(
+        props.selected
+        ? <button className="tile-selected">{props.piece.name}</button>
+        : <button className="tile-normal">{props.piece.name}</button>
+    )
 }
