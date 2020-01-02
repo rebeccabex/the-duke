@@ -40,7 +40,7 @@ export class Board extends React.Component <IBoardProps> {
     createBoardRow(rowNumber: number) {
         var boardRow = new Array<JSX.Element>();
         for (var i = 0; i < 6; i++) {
-            const coordinates = {x: rowNumber, y: i};
+            const coordinates = {x: i, y: rowNumber};
             boardRow.push(
                 <Square
                     coordinates={coordinates}
@@ -48,6 +48,7 @@ export class Board extends React.Component <IBoardProps> {
                     selected={coordinates === this.props.selectedSquare}
                     highlighted={this.props.legalSquares.some(square => coordinatesEqual(square, coordinates))}
                     clickSquare={this.selectSquare}
+                    key={i}
                 />);
         }
         return boardRow;
@@ -56,7 +57,7 @@ export class Board extends React.Component <IBoardProps> {
     createBoard() {
         var board = new Array<JSX.Element>();
         for (var i = 0; i < 6; i++) {
-            board.push(<div className="board-row">{this.createBoardRow(i)}</div>);
+            board.push(<div className="board-row" key={i}>{this.createBoardRow(i)}</div>);
         }
         return board;
     }

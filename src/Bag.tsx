@@ -16,9 +16,9 @@ export class Bag extends React.Component <IBagProps> {
 
     displayBagPieces() {
         var pieces = new Array<JSX.Element>();
-        this.props.pieces.forEach(piece => {
-            pieces.push(<div>{piece}</div>);
-        });
+        this.props.pieces.forEach(piece => 
+            pieces.push(<div>{piece.name}</div>)
+        );
         return <div>{pieces}</div>;
     }
 

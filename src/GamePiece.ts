@@ -3,9 +3,9 @@ export class GamePiece {
     initialMoveSet: MoveSet;
     flippedMoveSet: MoveSet;
     isFlipped: boolean;
-    position: BoardCoordinates;
+    position: BoardCoordinates | null;
     
-    constructor(name: string, startingPosition: BoardCoordinates) {
+    constructor(name: string, startingPosition: BoardCoordinates | null = null) {
         this.name = name;
         this.initialMoveSet = new MoveSet();
         this.flippedMoveSet = new MoveSet();
