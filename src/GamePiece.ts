@@ -1,3 +1,6 @@
+import { BoardCoordinates } from "GameBoard";
+import { Player } from "Player";
+
 export class GamePiece {
     name: string;
     initialMoveSet: MoveSet;
@@ -39,4 +42,7 @@ export class MoveSet {
     }
 }
 
-export type BoardCoordinates = {x: number, y: number};
+export type PlayerPiece = {
+    player: Player,
+    piece: GamePiece,
+}

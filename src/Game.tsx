@@ -4,13 +4,14 @@ import './App.css';
 import { remove } from "lodash";
 import { Bag } from './Bag';
 import { Board } from './Board';
-import { BoardCoordinates, GamePiece } from 'GamePiece';
+import { BoardCoordinates } from 'GameBoard';
+import { GamePiece } from 'GamePiece';
 import { Player, PlayerColours, WhiteStartingPositions } from 'Player';
 
 interface IGame {
     players: Player[],
     gamePhase: GamePhase,
-    currentPlayerColour: PlayerColours,
+    currentPlayer: Player,
     selectedSquare: BoardCoordinates | null,
     legalSquares: Array<BoardCoordinates>,
 }
@@ -18,12 +19,16 @@ interface IGame {
 export type GamePhase = 'Start' | 'Setup' | 'Playing' | 'Finished';
 
 class Game extends React.Component <{}, IGame> {
+
     constructor(props: any) {
+        var whitePlayer = new Player(PlayerColours.White);
+        var blackPlayer = new Player(PlayerColours.Black);
+
         super(props)
         this.state = {
-            players: [],
+            players: [whitePlayer, blackPlayer],
             gamePhase: 'Start',
-            currentPlayerColour: PlayerColours.White,
+            currentPlayer: whitePlayer,
             selectedSquare: null,
             legalSquares: [],
         }
@@ -31,14 +36,7 @@ class Game extends React.Component <{}, IGame> {
         this.createBags = this.createBags.bind(this);
         this.startGame = this.startGame.bind(this);
         this.selectSquare = this.selectSquare.bind(this);
-    }
-
-    componentDidMount() {
-        var players = new Array<Player>();
-        var players = [new Player(PlayerColours.White), new Player(PlayerColours.Black)];
-        this.setState({
-            players: players
-        });
+        this.switchPlayers = this.switchPlayers.bind(this);
     }
 
     startGame() {
@@ -54,33 +52,33 @@ class Game extends React.Component <{}, IGame> {
                 this.switchPlayers();
                 break;
             case 'Playing':
-                return <div className='game-instruction'>{this.state.currentPlayerColour}, make a move</div>;
+                return <div className='game-instruction'>{this.state.currentPlayer.colour}, make a move</div>;
             case 'Finished':
-                return <div className='game-instruction'>Congratulations, {this.state.currentPlayerColour}</div>;
+                return <div className='game-instruction'>Congratulations, {this.state.currentPlayer.colour}</div>;
         }
     }
 
     placePiece(pieceName: string, squareCoordinates: BoardCoordinates) {
-        var { currentPlayerColour, players } = this.state;
-        var currentPlayer = players.find((player) => player.colour === currentPlayerColour);
+        var { currentPlayer, players } = this.state;
         var currentPlayerBoardPieces = currentPlayer != null ? currentPlayer.boardPieces : [];
         var currentPlayerBagPieces = currentPlayer != null ? currentPlayer.bagPieces : [];
         var pieceToBePlaced = new GamePiece(pieceName, squareCoordinates);
 
         currentPlayerBoardPieces.push(pieceToBePlaced);
 
-        this.setState({
-            ...this.state,
-            players: this.state.players.map((player) =>
-                player.colour === this.state.currentPlayerColour
-                ? { ...player, boardPieces: currentPlayerBoardPieces, bagPieces: currentPlayerBagPieces }
-                : player
-            )
-        })
+        // this.setState({
+        //     ...this.state,
+        //     players: this.state.players.map((player) =>
+        //         player.colour === this.state.currentPlayerColour
+        //         ? { ...player, boardPieces: currentPlayerBoardPieces, bagPieces: currentPlayerBagPieces }
+        //         : player
+        //     )
+        // })
     }
 
     switchPlayers() {
-        this.setState({ ...this.state, currentPlayerColour: this.state.currentPlayerColour === PlayerColours.White ? PlayerColours.Black : PlayerColours.White })
+        var currentPlayerIndex = this.state.players.findIndex(player => player.colour === this.state.currentPlayer.colour);
+        this.setState({ ...this.state, currentPlayer: this.state.players[-currentPlayerIndex + 1] })
     }
 
     createBags() {
@@ -96,11 +94,11 @@ class Game extends React.Component <{}, IGame> {
             case 'Start':
                 return <button className="start-button" onClick={this.startGame}>{'Start game'}</button>;
             case 'Setup':
-                return <div className='game-instruction'>{this.state.currentPlayerColour}, select your starting position</div>;
+                return <div className='game-instruction'>{this.state.currentPlayer.colour}, select your starting position</div>;
             case 'Playing':
-                return <div className='game-instruction'>{this.state.currentPlayerColour}, make a move</div>;
+                return <div className='game-instruction'>{this.state.currentPlayer.colour}, make a move</div>;
             case 'Finished':
-                return <div className='game-instruction'>Congratulations, {this.state.currentPlayerColour}</div>;
+                return <div className='game-instruction'>Congratulations, {this.state.currentPlayer.colour}</div>;
         }
     }
 
@@ -111,10 +109,11 @@ class Game extends React.Component <{}, IGame> {
                     <Board
                         players={this.state.players}
                         gamePhase={this.state.gamePhase}
-                        currentPlayer={this.state.currentPlayerColour}
+                        currentPlayer={this.state.currentPlayer}
                         selectedSquare={this.state.selectedSquare}
                         legalSquares={this.state.legalSquares}
                         clickSquare={this.selectSquare}
+                        switchPlayers={this.switchPlayers}
                     />
                 </div>
                 <div className="game-info">

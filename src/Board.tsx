@@ -1,40 +1,59 @@
 import React from 'react';
 import { Square } from 'Square';
 import './board.css';
-import { Player, PlayerColours, WhiteStartingPositions, BlackStartingPositions } from 'Player';
-import { BoardCoordinates } from 'GamePiece';
+import { Player } from 'Player';
+import { BoardCoordinates, GameBoard, BoardSquare } from 'GameBoard';
 import { GamePhase } from 'Game';
+import { PlayerPiece, GamePiece } from 'GamePiece';
 
 interface IBoardProps {
     players: Player[],
     gamePhase: GamePhase,
-    currentPlayer: PlayerColours,
+    currentPlayer: Player,
     selectedSquare: BoardCoordinates | null,
     legalSquares: Array<BoardCoordinates>,
     clickSquare: (coordinate: BoardCoordinates) => any,
+    switchPlayers: () => any,
+}
+
+interface IBoardState {
+    gameBoard: GameBoard,
 }
 
 const coordinatesEqual = (coordinates1: BoardCoordinates, coordinates2: BoardCoordinates): boolean => {
     return coordinates1.x === coordinates2.x && coordinates1.y === coordinates2.y;
 }
 
-export class Board extends React.Component <IBoardProps> {
+export class Board extends React.Component <IBoardProps, IBoardState> {
     constructor(props: any) {
         super(props);
         this.state = {
+            gameBoard: this.createGameBoard(),
         }
 
         this.selectSquare = this.selectSquare.bind(this);
     }
 
-    findPieceOnSquare(coordinates: BoardCoordinates) {
-        const player = this.props.players.find(player => player.boardPieces.find(piece => piece.position === coordinates));
-        const piece = player ? player.boardPieces.find(piece => piece.position === coordinates) : null;
-        return piece ? piece : null;
+    createGameBoard() {
+        var newGameBoard = new Array<BoardSquare>();
+        for (let i = 0; i < 6 ; i++) {
+            for (let j = 0; j < 6; j++) {
+                var boardSquare: BoardSquare = { coordinates: {x: i, y: j}, piece: null};
+                newGameBoard.push(boardSquare);
+            }
+        }
+        return newGameBoard;
     }
 
+    getPieceOnSquare = (coordinates: BoardCoordinates) => 
+        this.state.gameBoard[0].piece;
+        // find(square => square.coordinates === coordinates)?.piece || null;
+
     selectSquare(squareCoordinates: BoardCoordinates) {
-        this.props.clickSquare(squareCoordinates);
+        if (this.props.gamePhase === 'Setup') {
+            this.placePiece(new GamePiece('Duke'), this.props.currentPlayer, squareCoordinates);
+        }
+        this.props.switchPlayers();
     }
 
     createBoardRow(rowNumber: number) {
@@ -44,7 +63,7 @@ export class Board extends React.Component <IBoardProps> {
             boardRow.push(
                 <Square
                     coordinates={coordinates}
-                    piece={this.findPieceOnSquare(coordinates)}
+                    piece={this.getPieceOnSquare(coordinates)}
                     selected={coordinates === this.props.selectedSquare}
                     highlighted={this.props.legalSquares.some(square => coordinatesEqual(square, coordinates))}
                     clickSquare={this.selectSquare}
@@ -62,11 +81,22 @@ export class Board extends React.Component <IBoardProps> {
         return board;
     }
 
-  render() {
-    return (
-        <div>
-            {this.createBoard()}
-        </div>
-    )
-  }
+    placePiece(gamePiece: GamePiece, player: Player, squareCoordinates: BoardCoordinates) {
+        var pieceToPlace: PlayerPiece = { player, piece: gamePiece };
+
+        this.setState({
+            ...this.state,
+            gameBoard: this.state.gameBoard.map((square) =>
+                square.coordinates == squareCoordinates ? {...square, piece: pieceToPlace} : square)
+        });
+
+    }
+
+    render() {
+        return (
+            <div>
+                {this.createBoard()}
+            </div>
+        )
+    }
 }
