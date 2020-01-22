@@ -45,9 +45,10 @@ export class Board extends React.Component <IBoardProps, IBoardState> {
         return newGameBoard;
     }
 
-    getPieceOnSquare = (coordinates: BoardCoordinates) => 
-        this.state.gameBoard[0].piece;
-        // find(square => square.coordinates === coordinates)?.piece || null;
+    getPieceOnSquare = (coordinates: BoardCoordinates): PlayerPiece | null => {
+        var squareOrUndefined = this.state.gameBoard.find(square => coordinatesEqual(square.coordinates, coordinates));
+        return (squareOrUndefined === undefined || squareOrUndefined === null ? null : squareOrUndefined.piece);
+    }
 
     selectSquare(squareCoordinates: BoardCoordinates) {
         if (this.props.gamePhase === 'Setup') {
@@ -87,7 +88,7 @@ export class Board extends React.Component <IBoardProps, IBoardState> {
         this.setState({
             ...this.state,
             gameBoard: this.state.gameBoard.map((square) =>
-                square.coordinates == squareCoordinates ? {...square, piece: pieceToPlace} : square)
+                coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: pieceToPlace} : square)
         });
 
     }

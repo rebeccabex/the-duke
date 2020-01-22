@@ -1,11 +1,8 @@
 import React from 'react';
-import * as ReactDOM from 'react-dom';
 import './App.css';
-import { remove } from "lodash";
 import { Bag } from './Bag';
 import { Board } from './Board';
 import { BoardCoordinates } from 'GameBoard';
-import { GamePiece } from 'GamePiece';
 import { Player, PlayerColours, WhiteStartingPositions } from 'Player';
 
 interface IGame {
@@ -48,32 +45,12 @@ class Game extends React.Component <{}, IGame> {
 
         switch(this.state.gamePhase) {
             case 'Setup':
-                this.placePiece('Duke', squareCoordinates);
-                this.switchPlayers();
                 break;
             case 'Playing':
                 return <div className='game-instruction'>{this.state.currentPlayer.colour}, make a move</div>;
             case 'Finished':
                 return <div className='game-instruction'>Congratulations, {this.state.currentPlayer.colour}</div>;
         }
-    }
-
-    placePiece(pieceName: string, squareCoordinates: BoardCoordinates) {
-        var { currentPlayer, players } = this.state;
-        var currentPlayerBoardPieces = currentPlayer != null ? currentPlayer.boardPieces : [];
-        var currentPlayerBagPieces = currentPlayer != null ? currentPlayer.bagPieces : [];
-        var pieceToBePlaced = new GamePiece(pieceName, squareCoordinates);
-
-        currentPlayerBoardPieces.push(pieceToBePlaced);
-
-        // this.setState({
-        //     ...this.state,
-        //     players: this.state.players.map((player) =>
-        //         player.colour === this.state.currentPlayerColour
-        //         ? { ...player, boardPieces: currentPlayerBoardPieces, bagPieces: currentPlayerBagPieces }
-        //         : player
-        //     )
-        // })
     }
 
     switchPlayers() {

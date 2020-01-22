@@ -1,6 +1,6 @@
 import React from 'react';
 import './square.css';
-import { GamePiece, PlayerPiece } from 'GamePiece';
+import { PlayerPiece } from 'GamePiece';
 import { BoardCoordinates } from 'GameBoard';
 import { Tile } from 'Tile';
 

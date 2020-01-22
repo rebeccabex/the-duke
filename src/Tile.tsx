@@ -8,7 +8,9 @@ interface ITileProps {
 }
 
 export const Tile = (props: ITileProps) => {
-    const tileClassName = props.selected ? 'tile-selected' : 'tile-normal';
+    const tileClassName = props.selected
+        ? `button ${props.piece.player.colour} tile-selected`
+        : `button ${props.piece.player.colour} tile-normal`;
 
     return(
         <button className={tileClassName}>{props.piece.piece.name}</button>
