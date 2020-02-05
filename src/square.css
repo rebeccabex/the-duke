@@ -1,5 +1,5 @@
-.square-plain {
-  background: #fff;
+.square {
+  background: rgba(165, 42, 42, 0.356);
   border: 1px solid #999;
   float: left;
   font-size: 24px;

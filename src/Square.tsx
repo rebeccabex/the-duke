@@ -18,12 +18,15 @@ export const Square = (props: ISquareProps) => {
   };
 
   return (
-    props.piece
-    ? <Tile piece={props.piece} selected={props.selected} />
-    : props.highlighted
-      ? <button className="square-highlighted" onClick={clickThisSquare}>
-          {props.coordinates.x + "," + props.coordinates.y}
-        </button>
-      : <div className="square-plain">{props.coordinates.x + "," + props.coordinates.y}</div>
+    <div className="square">
+      {props.piece
+      ? <Tile piece={props.piece} selected={props.selected} />
+      : props.highlighted
+        ? <button className="square-highlighted" onClick={clickThisSquare}>
+            {props.coordinates.x + "," + props.coordinates.y}
+          </button>
+        : <div className="square-plain">{props.coordinates.x + "," + props.coordinates.y}</div>
+      }
+    </div>
   )
 }

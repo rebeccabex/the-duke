@@ -3,12 +3,13 @@ import './App.css';
 import { Bag } from './Bag';
 import { Board } from './Board';
 import { BoardCoordinates } from 'GameBoard';
-import { Player, PlayerColours, WhiteStartingPositions } from 'Player';
+import { Player, PlayerColours, WhiteStartingPositions, BlackStartingPositions } from 'Player';
 
 interface IGame {
     players: Player[],
     gamePhase: GamePhase,
     currentPlayer: Player,
+    startPlayer: Player,
     selectedSquare: BoardCoordinates | null,
     legalSquares: Array<BoardCoordinates>,
 }
@@ -25,19 +26,21 @@ class Game extends React.Component <{}, IGame> {
         this.state = {
             players: [whitePlayer, blackPlayer],
             gamePhase: 'Start',
-            currentPlayer: whitePlayer,
+            currentPlayer: blackPlayer,
             selectedSquare: null,
             legalSquares: [],
+            startPlayer: blackPlayer,
         }
 
         this.createBags = this.createBags.bind(this);
         this.startGame = this.startGame.bind(this);
         this.selectSquare = this.selectSquare.bind(this);
         this.switchPlayers = this.switchPlayers.bind(this);
+        this.updateGamePhase = this.updateGamePhase.bind(this);
     }
 
     startGame() {
-        this.setState({ ...this.state, gamePhase: 'Setup', legalSquares: WhiteStartingPositions });
+        this.setState({ ...this.state, gamePhase: 'Setup', legalSquares: WhiteStartingPositions, currentPlayer: this.state.startPlayer });
     };
 
     selectSquare(squareCoordinates: BoardCoordinates) {
@@ -55,7 +58,7 @@ class Game extends React.Component <{}, IGame> {
 
     switchPlayers() {
         var currentPlayerIndex = this.state.players.findIndex(player => player.colour === this.state.currentPlayer.colour);
-        this.setState({ ...this.state, currentPlayer: this.state.players[-currentPlayerIndex + 1] })
+        return this.state.players[-currentPlayerIndex + 1];
     }
 
     createBags() {
@@ -79,6 +82,18 @@ class Game extends React.Component <{}, IGame> {
         }
     }
 
+    updateGamePhase(currentGamePhase: GamePhase) {
+        var { currentPlayer, startPlayer } = this.state;
+        switch(currentGamePhase) {
+            case 'Setup':
+                if (currentPlayer.colour === startPlayer.colour) {
+                    this.setState({ ...this.state, legalSquares: BlackStartingPositions, currentPlayer: this.switchPlayers()});
+                } else {
+                    this.setState({ ...this.state, gamePhase: 'Playing', currentPlayer: this.switchPlayers() });
+                }
+        }
+    }
+
     render() {
         return (
             <div className="game">
@@ -90,7 +105,7 @@ class Game extends React.Component <{}, IGame> {
                         selectedSquare={this.state.selectedSquare}
                         legalSquares={this.state.legalSquares}
                         clickSquare={this.selectSquare}
-                        switchPlayers={this.switchPlayers}
+                        updateGamePhase={this.updateGamePhase}
                     />
                 </div>
                 <div className="game-info">

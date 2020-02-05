@@ -13,7 +13,7 @@ interface IBoardProps {
     selectedSquare: BoardCoordinates | null,
     legalSquares: Array<BoardCoordinates>,
     clickSquare: (coordinate: BoardCoordinates) => any,
-    switchPlayers: () => any,
+    updateGamePhase: (currentGamePhase: GamePhase) => any,
 }
 
 interface IBoardState {
@@ -54,7 +54,6 @@ export class Board extends React.Component <IBoardProps, IBoardState> {
         if (this.props.gamePhase === 'Setup') {
             this.placePiece(new GamePiece('Duke'), this.props.currentPlayer, squareCoordinates);
         }
-        this.props.switchPlayers();
     }
 
     createBoardRow(rowNumber: number) {
@@ -68,7 +67,7 @@ export class Board extends React.Component <IBoardProps, IBoardState> {
                     selected={coordinates === this.props.selectedSquare}
                     highlighted={this.props.legalSquares.some(square => coordinatesEqual(square, coordinates))}
                     clickSquare={this.selectSquare}
-                    key={i}
+                    key={6 * rowNumber + i}
                 />);
         }
         return boardRow;
@@ -90,7 +89,7 @@ export class Board extends React.Component <IBoardProps, IBoardState> {
             gameBoard: this.state.gameBoard.map((square) =>
                 coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: pieceToPlace} : square)
         });
-
+        this.props.updateGamePhase(this.props.gamePhase);
     }
 
     render() {
