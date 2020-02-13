@@ -19,8 +19,8 @@ export enum PlayerColours {
   Black = 'Black'
 };
 
-export var WhiteStartingPositions = [{ x: 5, y: 2 }, { x: 5, y: 3 }];
-export var BlackStartingPositions = [{ x: 0, y: 2 }, { x: 0, y: 3 }];
+export var FirstStartingPositions = [{ x: 5, y: 2 }, { x: 5, y: 3 }];
+export var SecondStartingPositions = [{ x: 0, y: 2 }, { x: 0, y: 3 }];
 
 var duke = new GamePiece("Duke");
 var footsoldier1 = new GamePiece("Footsoldier", {x: 5, y: 3});

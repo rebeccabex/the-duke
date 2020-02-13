@@ -2,18 +2,18 @@ import React from 'react';
 import { Square } from 'Square';
 import './board.css';
 import { Player } from 'Player';
-import { BoardCoordinates, GameBoard, BoardSquare } from 'GameBoard';
-import { GamePhase } from 'Game';
+import { BoardCoordinates, GameBoard, BoardSquare, GameStage, GamePhase } from 'GameBoard';
 import { PlayerPiece, GamePiece } from 'GamePiece';
 
 interface IBoardProps {
     players: Player[],
+    gameStage: GameStage,
     gamePhase: GamePhase,
     currentPlayer: Player,
     selectedSquare: BoardCoordinates | null,
     legalSquares: Array<BoardCoordinates>,
-    clickSquare: (coordinate: BoardCoordinates) => any,
-    updateGamePhase: (currentGamePhase: GamePhase) => any,
+    // clickSquare: (coordinate: BoardCoordinates) => any,
+    updateGamePhase: (currentGamePhase: GameStage) => any,
 }
 
 interface IBoardState {
@@ -51,8 +51,13 @@ export class Board extends React.Component <IBoardProps, IBoardState> {
     }
 
     selectSquare(squareCoordinates: BoardCoordinates) {
-        if (this.props.gamePhase === 'Setup') {
-            this.placePiece(new GamePiece('Duke'), this.props.currentPlayer, squareCoordinates);
+        switch(this.props.gamePhase) {
+            case 'PlacingDuke':
+                this.placePiece(new GamePiece('Duke'), this.props.currentPlayer, squareCoordinates);
+                break;
+            case 'PlacingFootsoldier1':
+            case 'PlacingFootsoldier2':
+                this.placePiece(new GamePiece('Footsoldier'), this.props.currentPlayer, squareCoordinates);
         }
     }
 
@@ -67,6 +72,9 @@ export class Board extends React.Component <IBoardProps, IBoardState> {
                     selected={coordinates === this.props.selectedSquare}
                     highlighted={this.props.legalSquares.some(square => coordinatesEqual(square, coordinates))}
                     clickSquare={this.selectSquare}
+                    currentGamePhase={this.props.gamePhase}
+                    currentGameStage={this.props.gameStage}
+                    currentPlayer={this.props.currentPlayer}
                     key={6 * rowNumber + i}
                 />);
         }
@@ -89,7 +97,7 @@ export class Board extends React.Component <IBoardProps, IBoardState> {
             gameBoard: this.state.gameBoard.map((square) =>
                 coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: pieceToPlace} : square)
         });
-        this.props.updateGamePhase(this.props.gamePhase);
+        this.props.updateGamePhase(this.props.gameStage);
     }
 
     render() {
