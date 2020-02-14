@@ -1,7 +1,32 @@
 import { PlayerPiece } from "GamePiece";
 
-
 export type GameBoard = Array<BoardSquare>;
+
+// export const moveOrPlacePiece = (piece: PlayerPiece, newCoordinates: BoardCoordinates, oldCoordinates: BoardCoordinates | null = null): void => {
+//     if (!!oldCoordinates) {
+//       this.clearSquare(oldCoordinates);
+//     }
+//     const newSquare = this.gameBoard.find(s => coordinatesEqual(s.coordinates, newCoordinates));
+//     if (newSquare) {
+//       newSquare.piece = piece;
+//     }
+// }
+
+//   export const  clearSquare(coordinates: BoardCoordinates) {
+//     this.gameBoard.find(s => coordinatesEqual(s.coordinates, coordinates))!.piece = null;
+//   }
+// }
+
+export const createGameBoard = (): Array<BoardSquare>  => {
+  var newGameBoard = new Array<BoardSquare>();
+  for (let i = 0; i < 6 ; i++) {
+      for (let j = 0; j < 6; j++) {
+          var boardSquare: BoardSquare = { coordinates: {x: i, y: j}, piece: null};
+          newGameBoard.push(boardSquare);
+      }
+  }
+  return newGameBoard;
+}
 
 export type BoardSquare = {
   coordinates: BoardCoordinates;
