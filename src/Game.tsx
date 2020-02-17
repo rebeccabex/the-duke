@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import { Bag } from './Bag';
 import { Board } from './Board';
-import { BoardCoordinates, GameStage, GamePhase, GameBoard, coordinatesEqual, createGameBoard, getOrthogonallyAdjacentSquares } from 'GameBoard';
+import { BoardCoordinates, GameStage, GamePhase, GameBoard, coordinatesEqual, createGameBoard, getOrthogonallyAdjacentSquares, BoardSquare } from 'GameBoard';
 import { Player, PlayerColours, FirstStartingPositions, SecondStartingPositions } from 'Player';
 import { GamePiece, PlayerPiece } from 'GamePiece';
 
@@ -13,7 +13,7 @@ interface IGame {
   currentPlayer: Player,
   startPlayer: Player,
   gameBoard: GameBoard,
-  selectedSquare: BoardCoordinates | null,
+  selectedSquare: BoardSquare | null,
   legalSquares: Array<BoardCoordinates>,
 }
 
@@ -84,7 +84,7 @@ class Game extends React.Component <{}, IGame> {
       case 'Playing':
         switch(this.state.gamePhase) {
           case 'ChoosingMove':
-            gameInstruction = `${this.state.currentPlayer.colour}, select your starting position`;
+            gameInstruction = `${this.state.currentPlayer.colour}, make a move or draw from your bag`;
             break;
           case 'MovingPiece':
             gameInstruction = `${this.state.currentPlayer.colour}, make a move`;
@@ -93,6 +93,7 @@ class Game extends React.Component <{}, IGame> {
             gameInstruction = `${this.state.currentPlayer.colour}, choose where to place your piece`;
             break;
         }
+        break;
       case 'Finished':
         gameInstruction = `Congratulations, ${this.state.currentPlayer.colour}`;
     }
@@ -120,6 +121,17 @@ class Game extends React.Component <{}, IGame> {
     return orthogSquares.filter(square => this.isEmptySquare(square));
   }
 
+  // TODO: Filter out pieces that can't currently move
+  getSquaresWithCurrentPlayersPieces(newState: IGame = this.state) {
+    return newState.gameBoard
+      .filter(square => square.piece && square.piece.player.colour === this.getWaitingPlayer().colour)
+      .map(square => square.coordinates);
+  }
+
+  getLegalPieceMovingSquares(newState: IGame = this.state) {
+    return new Array<BoardCoordinates>();
+  }
+
   updateGamePhase(newState: IGame = this.state) {
     var { currentPlayer, startPlayer, gameStage, gamePhase } = newState;
     switch(gamePhase) {
@@ -141,11 +153,17 @@ class Game extends React.Component <{}, IGame> {
         if (currentPlayer.colour === startPlayer.colour) {
           newState = { ...newState, legalSquares: this.getLegalPlacingSquares(), currentPlayer: this.getWaitingPlayer()};
         } else {
-          newState = { ...newState, gameStage: 'Playing', legalSquares: this.getLegalPlacingSquares(newState), gamePhase: 'ChoosingMove', currentPlayer: this.getWaitingPlayer() };
+          newState = {
+            ...newState,
+            gameStage: 'Playing',
+            gamePhase: 'ChoosingMove',
+            legalSquares: this.getSquaresWithCurrentPlayersPieces(newState),
+            currentPlayer: this.getWaitingPlayer(),
+          };
         }
         break;
       case 'ChoosingMove':
-        newState = { ...newState, gamePhase: 'MovingPiece' };
+        newState = { ...newState, gamePhase: 'MovingPiece', legalSquares: this.getLegalPieceMovingSquares() };
         break;
       case null:
         switch(gameStage) {
@@ -164,7 +182,19 @@ class Game extends React.Component <{}, IGame> {
       case 'PlacingFootsoldier1':
       case 'PlacingFootsoldier2':
         this.placePiece(new GamePiece('Footsoldier'), this.state.currentPlayer, squareCoordinates);
+        break;
+      case 'ChoosingMove':
+        this.selectPiece(squareCoordinates);
     }
+  }
+
+  selectPiece(squareCoordinates: BoardCoordinates) {
+    const selectedSquare = this.state.gameBoard.find(square => coordinatesEqual(square.coordinates, squareCoordinates))
+    var newState = {
+      ...this.state,
+      selectedSquare: selectedSquare === undefined ? null : selectedSquare,
+    };
+    this.updateGamePhase(newState);
   }
 
   placePiece(gamePiece: GamePiece, player: Player, squareCoordinates: BoardCoordinates) {

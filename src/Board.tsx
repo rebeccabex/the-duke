@@ -2,7 +2,7 @@ import React from 'react';
 import { Square } from 'Square';
 import './board.css';
 import { Player } from 'Player';
-import { BoardCoordinates, GameBoard, GameStage, GamePhase } from 'GameBoard';
+import { BoardCoordinates, GameBoard, GameStage, GamePhase, BoardSquare } from 'GameBoard';
 
 interface IBoardProps {
   gameBoard: GameBoard,
@@ -10,7 +10,7 @@ interface IBoardProps {
   gameStage: GameStage,
   gamePhase: GamePhase,
   currentPlayer: Player,
-  selectedSquare: BoardCoordinates | null,
+  selectedSquare: BoardSquare | null,
   legalSquares: Array<BoardCoordinates>,
   clickSquare: (coordinate: BoardCoordinates) => any,
 }
@@ -29,18 +29,21 @@ export class Board extends React.Component <IBoardProps> {
     var boardRow = new Array<JSX.Element>();
     for (var i = 0; i < 6; i++) {
       const square = this.props.gameBoard.find(boardSquare => coordinatesEqual(boardSquare.coordinates, {x: rowNumber, y: i}));
-      square && boardRow.push(
-        <Square
-          coordinates={square.coordinates}
-          piece={square.piece}
-          selected={square.coordinates === this.props.selectedSquare}
-          highlighted={this.props.legalSquares.some(legalSquare => coordinatesEqual(legalSquare, square.coordinates))}
-          clickSquare={this.props.clickSquare}
-          currentGamePhase={this.props.gamePhase}
-          currentGameStage={this.props.gameStage}
-          currentPlayer={this.props.currentPlayer}
-          key={6 * rowNumber + i}
-        />);
+      if (square) {
+        const selected = this.props.selectedSquare !== null && coordinatesEqual(square.coordinates, this.props.selectedSquare.coordinates);
+        boardRow.push(
+          <Square
+            coordinates={square.coordinates}
+            piece={square.piece}
+            selected={selected}
+            highlighted={this.props.legalSquares.some(legalSquare => coordinatesEqual(legalSquare, square.coordinates))}
+            clickSquare={this.props.clickSquare}
+            currentGamePhase={this.props.gamePhase}
+            currentGameStage={this.props.gameStage}
+            currentPlayer={this.props.currentPlayer}
+            key={6 * rowNumber + i}
+          />);
+      }
     }
     return boardRow;
   }

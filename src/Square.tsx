@@ -1,9 +1,9 @@
 import React from 'react';
 import './square.css';
 import { PlayerPiece } from 'GamePiece';
-import { BoardCoordinates, coordinatesInSelection, GameStage, GamePhase } from 'GameBoard';
+import { BoardCoordinates, GameStage, GamePhase } from 'GameBoard';
 import { Tile } from 'Tile';
-import { Player, FirstStartingPositions, SecondStartingPositions } from 'Player';
+import { Player } from 'Player';
 
 interface ISquareProps {
     coordinates: BoardCoordinates;
