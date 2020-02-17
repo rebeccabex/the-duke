@@ -2,21 +2,6 @@ import { PlayerPiece } from "GamePiece";
 
 export type GameBoard = Array<BoardSquare>;
 
-// export const moveOrPlacePiece = (piece: PlayerPiece, newCoordinates: BoardCoordinates, oldCoordinates: BoardCoordinates | null = null): void => {
-//     if (!!oldCoordinates) {
-//       this.clearSquare(oldCoordinates);
-//     }
-//     const newSquare = this.gameBoard.find(s => coordinatesEqual(s.coordinates, newCoordinates));
-//     if (newSquare) {
-//       newSquare.piece = piece;
-//     }
-// }
-
-//   export const  clearSquare(coordinates: BoardCoordinates) {
-//     this.gameBoard.find(s => coordinatesEqual(s.coordinates, coordinates))!.piece = null;
-//   }
-// }
-
 export const createGameBoard = (): Array<BoardSquare>  => {
   var newGameBoard = new Array<BoardSquare>();
   for (let i = 0; i < 6 ; i++) {
@@ -41,6 +26,24 @@ export const coordinatesEqual = (coordinates1: BoardCoordinates, coordinates2: B
 
 export const coordinatesInSelection = (selection: BoardCoordinates[], coordinates: BoardCoordinates): boolean => {
   return selection.some(c => coordinatesEqual(c, coordinates));
+}
+
+export const getOrthogonallyAdjacentSquares = (currentSquare: BoardCoordinates): BoardCoordinates[] => {
+  var neighbourhood = [];
+
+  for (var i = -1; i < 2; i++){
+    for (var j = -1; j < 2; j++){
+      const coordinates = {x: currentSquare.x + i, y: currentSquare.y + j};
+      if (Math.abs(i) !== Math.abs(j) && areValidCoordinates(coordinates)) {
+        neighbourhood.push(coordinates);
+      }
+    }
+  }
+  return neighbourhood;
+}
+
+export const areValidCoordinates = (coordinates: BoardCoordinates): boolean => {
+  return coordinates.x >= 0 && coordinates.x < 6 && coordinates.y >= 0 && coordinates.y < 6;
 }
 
 export type GameStage = 'Start' | 'Setup' | 'Playing' | 'Finished';

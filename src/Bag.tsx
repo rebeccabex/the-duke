@@ -2,31 +2,31 @@ import React from 'react';
 import { GamePiece } from 'GamePiece';
 
 interface IBagProps {
-    colour: string,
-    pieces: GamePiece[]
+  colour: string,
+  pieces: GamePiece[]
 }
 
 export class Bag extends React.Component <IBagProps> {
-    constructor(props: any) {
-        super(props);
+  constructor(props: any) {
+    super(props);
 
-        this.displayBagPieces = this.displayBagPieces.bind(this);
-    }
+    this.displayBagPieces = this.displayBagPieces.bind(this);
+  }
 
-    displayBagPieces() {
-        var pieces = new Array<JSX.Element>();
-        this.props.pieces.forEach(piece => 
-            pieces.push(<div>{piece.name}</div>)
-        );
-        return <div>{pieces}</div>;
-    }
+  displayBagPieces() {
+    var pieces = new Array<JSX.Element>();
+    this.props.pieces.forEach(piece => 
+      pieces.push(<div>{piece.name}</div>)
+    );
+    return <div>{pieces}</div>;
+  }
 
-    render() {
-        return(
-            <div>
-                <h4>{this.props.colour}'s Bag</h4>
-                <div>{this.displayBagPieces()}</div>
-            </div>
-        )
-    }
+  render() {
+    return(
+      <div>
+        <h4>{this.props.colour}'s Bag</h4>
+        <div>{this.displayBagPieces()}</div>
+      </div>
+    )
+  }
 }

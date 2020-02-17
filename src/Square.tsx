@@ -21,38 +21,16 @@ export const Square = (props: ISquareProps) => {
     props.clickSquare(props.coordinates);
   };
 
-  const isSquareHighlighted = (): boolean => {
-    const { currentGamePhase, currentPlayer, piece, coordinates, highlighted } = props;
-    const firstPositions = FirstStartingPositions;
-    const secondPositions = SecondStartingPositions;
-    switch(currentGamePhase) {
-      case 'PlacingDuke':
-      case 'PlacingFootsoldier1':
-      case 'PlacingFootsoldier2':
-        if (currentPlayer.colour === 'Black') {
-          return coordinatesInSelection(firstPositions, coordinates);
-        } else {
-          return coordinatesInSelection(secondPositions, coordinates);
-        }
-      case 'ChoosingMove':
-        return piece === null ? false : piece.player.colour === currentPlayer.colour;
-      default:
-        return highlighted;
-    }
-  }
-
-  const squareIsHighlighted = isSquareHighlighted();
-  
   return (
     <div className="square-plain">
       {props.piece
       ? <Tile
           piece={props.piece}
           selected={props.selected}
-          clickable={squareIsHighlighted}
+          clickable={props.highlighted}
           onClick={clickThisSquare}
         />
-      : squareIsHighlighted
+      : props.highlighted
         ? <button className="square-highlighted" onClick={clickThisSquare}>
             {props.coordinates.x + "," + props.coordinates.y}
           </button>
