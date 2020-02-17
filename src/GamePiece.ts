@@ -18,12 +18,12 @@ export class GamePiece {
 }
 
 export class MoveSet {
-    move: Array<BoardCoordinates> | null;
-    jump: Array<BoardCoordinates> | null;
-    slide: Array<BoardCoordinates> | null;
-    jumpSlide: Array<BoardCoordinates> | null;
-    strike: Array<BoardCoordinates> | null;
-    command: Array<BoardCoordinates> | null;
+    move: Array<BoardCoordinates>;
+    jump: Array<BoardCoordinates>;
+    slide: Array<BoardCoordinates>;
+    jumpSlide: Array<BoardCoordinates>;
+    strike: Array<BoardCoordinates>;
+    command: Array<BoardCoordinates>;
 
     constructor(
         move?: Array<BoardCoordinates>,
@@ -33,12 +33,37 @@ export class MoveSet {
         strike?: Array<BoardCoordinates>,
         command?: Array<BoardCoordinates>,
     ) {
-        this.move = move ? move : null;
-        this.jump = jump ? jump : null;
-        this.slide = slide ? slide : null;
-        this.jumpSlide = jumpSlide ? jumpSlide : null;
-        this.strike = strike ? strike : null;
-        this.command = command ? command : null;
+        this.move = move ? move : [];
+        this.jump = jump ? jump : [];
+        this.slide = slide ? slide : [];
+        this.jumpSlide = jumpSlide ? jumpSlide : [];
+        this.strike = strike ? strike : [];
+        this.command = command ? command : [];
+    }
+
+    // TODO: Add ability to handle more human-readable descriptions 'Slide: Left'
+    addMoves(landingSquares: Array<BoardCoordinates>) {
+        this.move.push(...landingSquares);
+    }
+
+    addJumps(landingSquares: Array<BoardCoordinates>) {
+        this.jump.push(...landingSquares);
+    }
+
+    addSlides(directions:  Array<BoardCoordinates>) {
+        this.slide.push(...directions);
+    }
+
+    addJumpSlide(directions: Array<BoardCoordinates>) {
+        this.jumpSlide.push(...directions);
+    }
+
+    addStrikeSpots(targetSquares: Array<BoardCoordinates>) {
+        this.strike.push(...targetSquares);
+    }
+
+    addCommandSpots(targetSquares: Array<BoardCoordinates>) {
+        this.command.push(...targetSquares);
     }
 }
 

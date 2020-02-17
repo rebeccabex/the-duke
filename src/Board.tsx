@@ -20,11 +20,6 @@ const coordinatesEqual = (coordinates1: BoardCoordinates, coordinates2: BoardCoo
 }
 
 export class Board extends React.Component <IBoardProps> {
-  constructor(props: any) {
-    super(props);
-
-  }
-
   renderBoardRow(rowNumber: number) {
     var boardRow = new Array<JSX.Element>();
     for (var i = 0; i < 6; i++) {

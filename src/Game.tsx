@@ -5,6 +5,7 @@ import { Board } from './Board';
 import { BoardCoordinates, GameStage, GamePhase, GameBoard, coordinatesEqual, createGameBoard, getOrthogonallyAdjacentSquares, BoardSquare } from 'GameBoard';
 import { Player, PlayerColours, FirstStartingPositions, SecondStartingPositions } from 'Player';
 import { GamePiece, PlayerPiece } from 'GamePiece';
+import { Duke, Footsoldier } from 'PieceData';
 
 interface IGame {
   players: Player[],
@@ -177,14 +178,17 @@ class Game extends React.Component <{}, IGame> {
   selectSquare(squareCoordinates: BoardCoordinates) {
     switch(this.state.gamePhase) {
       case 'PlacingDuke':
-        this.placePiece(new GamePiece('Duke'), this.state.currentPlayer, squareCoordinates);
+        this.placePiece(new Duke(), this.state.currentPlayer, squareCoordinates);
         break;
       case 'PlacingFootsoldier1':
       case 'PlacingFootsoldier2':
-        this.placePiece(new GamePiece('Footsoldier'), this.state.currentPlayer, squareCoordinates);
+        this.placePiece(new Footsoldier(), this.state.currentPlayer, squareCoordinates);
         break;
       case 'ChoosingMove':
         this.selectPiece(squareCoordinates);
+        break;
+      default:
+        console.log('Error');
     }
   }
 

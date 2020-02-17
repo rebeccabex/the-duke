@@ -19,6 +19,6 @@ export const Tile = (props: ITileProps) => {
   const orientation = props.piece.piece.isFlipped ? "R" : "I";
 
   return(
-    <button className={tileClassName}>{`${props.piece.piece.name} ${orientation}`}</button>
+    <button className={tileClassName} onClick={props.onClick}>{`${props.piece.piece.name} ${orientation}`}</button>
   )
 }
