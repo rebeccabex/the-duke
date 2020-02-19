@@ -1,4 +1,4 @@
-import { PlayerPiece } from "GamePiece";
+import { PlayerPiece, MoveSet } from "GamePiece";
 
 export type GameBoard = Array<BoardSquare>;
 
@@ -20,8 +20,21 @@ export type BoardSquare = {
 
 export type BoardCoordinates = {x: number, y: number};
 
-export const coordinatesEqual = (coordinates1: BoardCoordinates, coordinates2: BoardCoordinates): boolean => {
-  return coordinates1.x === coordinates2.x && coordinates1.y === coordinates2.y;
+export const coordinatesEqual = (coordinates1: BoardCoordinates | null, coordinates2: BoardCoordinates | null): boolean => {
+  return !!coordinates1 && !!coordinates2 && coordinates1.x === coordinates2.x && coordinates1.y === coordinates2.y;
+}
+
+export const applyMoveToCoordinates = (currentCoordinates: BoardCoordinates, move: BoardCoordinates): BoardCoordinates => {
+  return {x: currentCoordinates.x + move.x, y: currentCoordinates.y + move.y};
+}
+
+export const applyRangeOfMovesToCoordinates = (currentCoordinates: BoardCoordinates, direction: BoardCoordinates): BoardCoordinates[] => {
+  const rangeOfCoordinates = new Array<BoardCoordinates>();
+  for (var i = 1; i < 6; i++) {
+    const newCoordinates = applyMoveToCoordinates(currentCoordinates, {x: direction.x * i, y: direction.y * i});
+    rangeOfCoordinates.push(newCoordinates);
+  }
+  return rangeOfCoordinates;
 }
 
 export const coordinatesInSelection = (selection: BoardCoordinates[], coordinates: BoardCoordinates): boolean => {
@@ -44,6 +57,17 @@ export const getOrthogonallyAdjacentSquares = (currentSquare: BoardCoordinates):
 
 export const areValidCoordinates = (coordinates: BoardCoordinates): boolean => {
   return coordinates.x >= 0 && coordinates.x < 6 && coordinates.y >= 0 && coordinates.y < 6;
+}
+
+export const returnValidCoordinatesFromRange = (range: BoardCoordinates[]): BoardCoordinates[] => {
+  return range.filter(coordinates => areValidCoordinates(coordinates));
+}
+
+export const getAvailableMoveSquares = (moveSet: MoveSet, currentCoordinates: BoardCoordinates): BoardCoordinates[] => {
+  const legalSquares = moveSet.getLegalTargetCoordinatesForCurrentCoordinatesForSingleSquareMoves(currentCoordinates);
+  legalSquares.push(...moveSet.getLegalTargetCoordinatesForCurrentCoordinatesForRangeMoves(currentCoordinates));
+
+  return legalSquares.filter((coordinates, index, range) => index === range.indexOf(coordinates));
 }
 
 export type GameStage = 'Start' | 'Setup' | 'Playing' | 'Finished';

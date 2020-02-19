@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import { Bag } from './Bag';
 import { Board } from './Board';
-import { BoardCoordinates, GameStage, GamePhase, GameBoard, coordinatesEqual, createGameBoard, getOrthogonallyAdjacentSquares, BoardSquare } from 'GameBoard';
+import { BoardCoordinates, GameStage, GamePhase, GameBoard, coordinatesEqual, createGameBoard, getOrthogonallyAdjacentSquares, BoardSquare, getAvailableMoveSquares } from 'GameBoard';
 import { Player, PlayerColours, FirstStartingPositions, SecondStartingPositions } from 'Player';
 import { GamePiece, PlayerPiece } from 'GamePiece';
 import { Duke, Footsoldier } from 'PieceData';
@@ -130,6 +130,15 @@ class Game extends React.Component <{}, IGame> {
   }
 
   getLegalPieceMovingSquares(newState: IGame = this.state) {
+    const { selectedSquare } = newState;
+    if (!!selectedSquare) {
+      const selectedPiece = selectedSquare.piece;
+      if (!!selectedPiece) {
+        const currentMoveSet = selectedPiece.piece.isFlipped ? selectedPiece.piece.flippedMoveSet: selectedPiece.piece.initialMoveSet;
+        return getAvailableMoveSquares(currentMoveSet, selectedSquare.coordinates).filter(coordinates => this.isEmptySquare(coordinates));
+      }
+    }
+    console.log('No piece selected');
     return new Array<BoardCoordinates>();
   }
 
@@ -164,7 +173,7 @@ class Game extends React.Component <{}, IGame> {
         }
         break;
       case 'ChoosingMove':
-        newState = { ...newState, gamePhase: 'MovingPiece', legalSquares: this.getLegalPieceMovingSquares() };
+        newState = { ...newState, gamePhase: 'MovingPiece', legalSquares: this.getLegalPieceMovingSquares(newState) };
         break;
       case null:
         switch(gameStage) {
@@ -187,6 +196,9 @@ class Game extends React.Component <{}, IGame> {
       case 'ChoosingMove':
         this.selectPiece(squareCoordinates);
         break;
+      case 'MovingPiece':
+        this.movePiece(squareCoordinates);
+        break;
       default:
         console.log('Error');
     }
@@ -199,6 +211,14 @@ class Game extends React.Component <{}, IGame> {
       selectedSquare: selectedSquare === undefined ? null : selectedSquare,
     };
     this.updateGamePhase(newState);
+  }
+
+  unselectPiece(squareCoordinates: BoardCoordinates) {
+
+  }
+
+  movePiece(squareCoordinates: BoardCoordinates) {
+
   }
 
   placePiece(gamePiece: GamePiece, player: Player, squareCoordinates: BoardCoordinates) {
