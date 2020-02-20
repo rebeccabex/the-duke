@@ -23,7 +23,7 @@ export class Board extends React.Component <IBoardProps> {
   renderBoardRow(rowNumber: number) {
     var boardRow = new Array<JSX.Element>();
     for (var i = 0; i < 6; i++) {
-      const square = this.props.gameBoard.find(boardSquare => coordinatesEqual(boardSquare.coordinates, {x: rowNumber, y: i}));
+      const square = this.props.gameBoard.find(boardSquare => coordinatesEqual(boardSquare.coordinates, {x: i, y: rowNumber}));
       if (square) {
         const selected = this.props.selectedSquare !== null && coordinatesEqual(square.coordinates, this.props.selectedSquare.coordinates);
         boardRow.push(

@@ -1,4 +1,5 @@
 import { PlayerPiece, MoveSet } from "GamePiece";
+import { Player } from "Player";
 
 export type GameBoard = Array<BoardSquare>;
 
@@ -20,12 +21,24 @@ export type BoardSquare = {
 
 export type BoardCoordinates = {x: number, y: number};
 
+export const boardSquareIsEmpty = (boardSquare?: BoardSquare): boolean => {
+  return !!boardSquare && boardSquare.piece === null;
+}
+
+export const boardSquareContainsEnemy = (boardSquare: BoardSquare, currentPlayer: Player): boolean => {
+  return boardSquare.piece !== null && boardSquare.piece.player.colour !== currentPlayer.colour;
+}
+
 export const coordinatesEqual = (coordinates1: BoardCoordinates | null, coordinates2: BoardCoordinates | null): boolean => {
   return !!coordinates1 && !!coordinates2 && coordinates1.x === coordinates2.x && coordinates1.y === coordinates2.y;
 }
 
 export const applyMoveToCoordinates = (currentCoordinates: BoardCoordinates, move: BoardCoordinates): BoardCoordinates => {
   return {x: currentCoordinates.x + move.x, y: currentCoordinates.y + move.y};
+}
+
+export const multiplyMoveVectorByScalar = (moveVector: BoardCoordinates, scalar: number): BoardCoordinates => {
+  return {x: moveVector.x * scalar, y: moveVector.y * scalar}
 }
 
 export const applyRangeOfMovesToCoordinates = (currentCoordinates: BoardCoordinates, direction: BoardCoordinates): BoardCoordinates[] => {
@@ -63,9 +76,17 @@ export const returnValidCoordinatesFromRange = (range: BoardCoordinates[]): Boar
   return range.filter(coordinates => areValidCoordinates(coordinates));
 }
 
-export const getAvailableMoveSquares = (moveSet: MoveSet, currentCoordinates: BoardCoordinates): BoardCoordinates[] => {
-  const legalSquares = moveSet.getLegalTargetCoordinatesForCurrentCoordinatesForSingleSquareMoves(currentCoordinates);
-  legalSquares.push(...moveSet.getLegalTargetCoordinatesForCurrentCoordinatesForRangeMoves(currentCoordinates));
+export const getAvailableMoveSquares = (
+  moveSet: MoveSet,
+  currentCoordinates: BoardSquare,
+  gameBoard: GameBoard,
+  currentPlayer: Player
+): BoardCoordinates[] => {
+  const legalSquares = moveSet.getLegalTargetCoordinatesForMovesAndJumps(currentCoordinates, gameBoard, currentPlayer);
+  legalSquares.push(...moveSet.getLegalTargetCoordinatesForSlides(currentCoordinates, gameBoard, currentPlayer));
+  legalSquares.push(...moveSet.getLegalTargetCoordinatesForJumpSlides(currentCoordinates, gameBoard, currentPlayer));
+  legalSquares.push(...moveSet.getLegalTargetCoordinatesForStrikes(currentCoordinates, gameBoard, currentPlayer));
+  legalSquares.push(...moveSet.getLegalTargetCoordinatesForCommands(currentCoordinates, gameBoard, currentPlayer));
 
   return legalSquares.filter((coordinates, index, range) => index === range.indexOf(coordinates));
 }

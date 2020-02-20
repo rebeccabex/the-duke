@@ -19,5 +19,5 @@ export enum PlayerColours {
   Black = 'Black'
 };
 
-export var FirstStartingPositions = [{ x: 5, y: 2 }, { x: 5, y: 3 }];
-export var SecondStartingPositions = [{ x: 0, y: 2 }, { x: 0, y: 3 }];
+export var FirstStartingPositions = [{ x: 2, y: 5 }, { x: 3, y: 5 }];
+export var SecondStartingPositions = [{ x: 2, y: 0 }, { x: 3, y: 0 }];
