@@ -81,10 +81,13 @@ export class MoveSet {
     [this.moves, this.jumps].forEach(moveType =>
       moveType.forEach(move => {
         const newCoordinates = applyMoveToCoordinates(currentSquare.coordinates, move);
-        if (areValidCoordinates(newCoordinates)
-          && boardSquareIsEmpty(currentSquare) || boardSquareContainsEnemy(currentSquare, currentPlayer)
-        ) {
-          legalSquares.push(newCoordinates);
+        if (areValidCoordinates(newCoordinates)) {
+          const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));
+          if (!!newBoardSquare) {
+            if (boardSquareIsEmpty(newBoardSquare) || boardSquareContainsEnemy(newBoardSquare, currentPlayer)) {
+              legalSquares.push(newCoordinates);
+            }
+          }
         }
       })
     );
