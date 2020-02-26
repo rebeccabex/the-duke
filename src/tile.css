@@ -26,7 +26,7 @@
 }
 
 .tile-selected {
-  border: 2px red solid;
+  border: 2px cyan solid;
 }
 
 .tile-normal {

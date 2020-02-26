@@ -224,11 +224,13 @@ class Game extends React.Component <{}, IGame> {
 
   selectPiece(squareCoordinates: BoardCoordinates) {
     const selectedSquare = this.state.gameBoard.find(square => coordinatesEqual(square.coordinates, squareCoordinates))
-    var newState = {
-      ...this.state,
-      selectedSquare: selectedSquare === undefined ? null : selectedSquare,
-    };
-    this.updateGamePhase(newState);
+    if (selectedSquare && selectedSquare.piece && selectedSquare.piece.player.colour === this.state.currentPlayer.colour) {
+      var newState = {
+        ...this.state,
+        selectedSquare: selectedSquare === undefined ? null : selectedSquare,
+      };
+      this.updateGamePhase(newState);
+    }
   }
 
   unselectPiece() {
