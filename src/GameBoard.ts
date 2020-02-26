@@ -50,6 +50,17 @@ export const applyRangeOfMovesToCoordinates = (currentCoordinates: BoardCoordina
   return rangeOfCoordinates;
 }
 
+export const isStandardMoveBlocked = (currentCoordinates: BoardCoordinates, move: BoardCoordinates, gameBoard: GameBoard): boolean => {
+  for (let i = 1; i < Math.max(Math.abs(move.x), Math.abs(move.y)); i++) {
+    var scalar = move.x < 0 || move.x < 0 ? -i : i;
+    const moveStep = applyMoveToCoordinates(currentCoordinates, multiplyMoveVectorByScalar(move, scalar));
+    if (!boardSquareIsEmpty(gameBoard.find(square => coordinatesEqual(square.coordinates, moveStep)))) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export const coordinatesInSelection = (selection: BoardCoordinates[], coordinates: BoardCoordinates): boolean => {
   return selection.some(c => coordinatesEqual(c, coordinates));
 }
@@ -82,7 +93,8 @@ export const getAvailableMoveSquares = (
   gameBoard: GameBoard,
   currentPlayer: Player
 ): BoardCoordinates[] => {
-  const legalSquares = moveSet.getLegalTargetCoordinatesForMovesAndJumps(currentCoordinates, gameBoard, currentPlayer);
+  const legalSquares = moveSet.getLegalTargetCoordinatesForStandardMoves(currentCoordinates, gameBoard, currentPlayer);
+  legalSquares.push(...moveSet.getLegalTargetCoordinatesForJumps(currentCoordinates, gameBoard, currentPlayer));
   legalSquares.push(...moveSet.getLegalTargetCoordinatesForSlides(currentCoordinates, gameBoard, currentPlayer));
   legalSquares.push(...moveSet.getLegalTargetCoordinatesForJumpSlides(currentCoordinates, gameBoard, currentPlayer));
   legalSquares.push(...moveSet.getLegalTargetCoordinatesForStrikes(currentCoordinates, gameBoard, currentPlayer));
