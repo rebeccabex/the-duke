@@ -153,7 +153,31 @@ export class MoveSet {
 
   getLegalTargetCoordinatesForJumpSlides(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
     const legalSquares = new Array<BoardCoordinates>();
-    
+    this.jumpSlides.forEach(move => {
+      let tryNextSquare = true;
+      let distance = 2;
+      while (tryNextSquare) {
+        let newMove = multiplyMoveVectorByScalar(move, distance);
+        newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(newMove, -1) : newMove;
+        const newCoordinates = applyMoveToCoordinates(currentSquare.coordinates, newMove);
+        if (areValidCoordinates(newCoordinates)) {
+          const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));
+          if (!!newBoardSquare) {
+              if (boardSquareIsEmpty(newBoardSquare)) {
+                legalSquares.push(newCoordinates);
+                distance++;
+              } else if (boardSquareContainsEnemy(newBoardSquare, currentPlayer)) {
+                legalSquares.push(newCoordinates);
+                tryNextSquare = false;
+              } else {
+                tryNextSquare = false;
+              }
+          }
+        } else {
+          tryNextSquare = false;
+        }
+      }
+    });
    return legalSquares;
   }
 

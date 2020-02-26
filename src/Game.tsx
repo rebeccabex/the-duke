@@ -146,7 +146,7 @@ class Game extends React.Component <{}, IGame> {
       const selectedPiece = selectedSquare.piece;
       if (!!selectedPiece) {
         const currentMoveSet = selectedPiece.piece.isFlipped ? selectedPiece.piece.flippedMoveSet: selectedPiece.piece.initialMoveSet;
-        return getAvailableMoveSquares(currentMoveSet, selectedSquare, newState.gameBoard, newState.currentPlayer).filter(coordinates => this.isEmptySquare(coordinates));
+        return getAvailableMoveSquares(currentMoveSet, selectedSquare, newState.gameBoard, newState.currentPlayer);
       }
     }
     console.log('No piece selected');
