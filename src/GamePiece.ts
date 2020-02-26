@@ -79,7 +79,7 @@ export class MoveSet {
 
   getLegalTargetCoordinatesForStandardMoves(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
     const legalSquares = new Array<BoardCoordinates>();
-    [this.moves, this.jumps].forEach(moveType =>
+    [this.moves].forEach(moveType =>
       moveType.forEach(move => {
         let newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(move, -1) : move;
         const newCoordinates = applyMoveToCoordinates(currentSquare.coordinates, newMove);
@@ -87,8 +87,8 @@ export class MoveSet {
           const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));
           if (!!newBoardSquare) {
             if (boardSquareIsEmpty(newBoardSquare) || boardSquareContainsEnemy(newBoardSquare, currentPlayer)) {
-              if (Math.abs(newCoordinates.x) > 1 || Math.abs(newCoordinates.y) > 1) {
-                if (!isStandardMoveBlocked(newCoordinates, newMove, gameBoard)) {
+              if (Math.abs(newMove.x) > 1 || Math.abs(newMove.y) > 1) {
+                if (!isStandardMoveBlocked(currentSquare.coordinates, newMove, gameBoard)) {
                   legalSquares.push(newCoordinates);
                 }
               } else {
@@ -104,7 +104,7 @@ export class MoveSet {
 
   getLegalTargetCoordinatesForJumps(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
     const legalSquares = new Array<BoardCoordinates>();
-    [this.moves, this.jumps].forEach(moveType =>
+    [this.jumps].forEach(moveType =>
       moveType.forEach(move => {
         let newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(move, -1) : move;
         const newCoordinates = applyMoveToCoordinates(currentSquare.coordinates, newMove);
@@ -128,7 +128,7 @@ export class MoveSet {
       let distance = 1;
       while (tryNextSquare) {
         let newMove = multiplyMoveVectorByScalar(move, distance);
-        newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(move, -1) : newMove;
+        newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(newMove, -1) : newMove;
         const newCoordinates = applyMoveToCoordinates(currentSquare.coordinates, newMove);
         if (areValidCoordinates(newCoordinates)) {
           const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));

@@ -52,7 +52,7 @@ export const applyRangeOfMovesToCoordinates = (currentCoordinates: BoardCoordina
 
 export const isStandardMoveBlocked = (currentCoordinates: BoardCoordinates, move: BoardCoordinates, gameBoard: GameBoard): boolean => {
   for (let i = 1; i < Math.max(Math.abs(move.x), Math.abs(move.y)); i++) {
-    var scalar = move.x < 0 || move.x < 0 ? -i : i;
+    var scalar = move.x < 0 || move.y < 0 ? -i : i;
     const moveStep = applyMoveToCoordinates(currentCoordinates, multiplyMoveVectorByScalar(move, scalar));
     if (!boardSquareIsEmpty(gameBoard.find(square => coordinatesEqual(square.coordinates, moveStep)))) {
       return true;
