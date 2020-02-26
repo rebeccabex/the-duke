@@ -31,8 +31,8 @@ interface IGame {
 class Game extends React.Component <{}, IGame> {
 
   constructor(props: any) {
-    var whitePlayer = new Player(PlayerColours.White);
-    var blackPlayer = new Player(PlayerColours.Black);
+    var whitePlayer = new Player(PlayerColours.White, false);
+    var blackPlayer = new Player(PlayerColours.Black, true);
 
     super(props)
     this.state = {

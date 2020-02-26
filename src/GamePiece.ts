@@ -80,7 +80,8 @@ export class MoveSet {
     const legalSquares = new Array<BoardCoordinates>();
     [this.moves, this.jumps].forEach(moveType =>
       moveType.forEach(move => {
-        const newCoordinates = applyMoveToCoordinates(currentSquare.coordinates, move);
+        let newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(move, -1) : move;
+        const newCoordinates = applyMoveToCoordinates(currentSquare.coordinates, newMove);
         if (areValidCoordinates(newCoordinates)) {
           const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));
           if (!!newBoardSquare) {
@@ -101,6 +102,7 @@ export class MoveSet {
       let distance = 1;
       while (tryNextSquare) {
         let newMove = multiplyMoveVectorByScalar(move, distance);
+        newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(move, -1) : newMove;
         const newCoordinates = applyMoveToCoordinates(currentSquare.coordinates, newMove);
         if (areValidCoordinates(newCoordinates)) {
           const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));

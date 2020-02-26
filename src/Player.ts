@@ -5,12 +5,14 @@ export class Player {
   boardPieces: Array<GamePiece>;
   bagPieces: Array<GamePiece>;
   lostPieces: Array<GamePiece>;
+  directionReversed: boolean;
 
-  constructor(playerColour: PlayerColours) {
+  constructor(playerColour: PlayerColours, directionReversed: boolean = false) {
       this.colour = playerColour;
       this.boardPieces = [];
       this.bagPieces = [];
       this.lostPieces = [];
+      this.directionReversed = directionReversed;
   }
 }
 
