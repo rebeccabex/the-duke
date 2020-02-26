@@ -183,6 +183,16 @@ export class MoveSet {
 
   getLegalTargetCoordinatesForStrikes(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
     const legalSquares = new Array<BoardCoordinates>();
+    this.strikes.forEach(strike => {
+      const directedStrike = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(strike, -1) : strike;
+      const targetCoordinates = applyMoveToCoordinates(currentSquare.coordinates, directedStrike);
+      if (areValidCoordinates(targetCoordinates)) {
+        const targetSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, targetCoordinates));
+        if (targetSquare && boardSquareContainsEnemy(targetSquare, currentPlayer)) {
+          legalSquares.push(targetCoordinates);
+        }
+      }
+    });
     return legalSquares;
   }
 
