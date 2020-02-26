@@ -185,6 +185,8 @@ class Game extends React.Component <{}, IGame> {
       case 'ChoosingMove':
         newState = { ...newState, gamePhase: 'MovingPiece', legalSquares: this.getLegalPieceMovingSquares(newState) };
         break;
+      case 'MovingPiece':
+        newState = { ...newState, gamePhase: 'ChoosingMove', legalSquares: this.getSquaresWithCurrentPlayersPieces(newState) };
       case null:
         switch(gameStage) {
           case 'Start':
@@ -207,7 +209,11 @@ class Game extends React.Component <{}, IGame> {
         this.selectPiece(squareCoordinates);
         break;
       case 'MovingPiece':
-        this.movePiece(squareCoordinates);
+        if (coordinatesEqual(squareCoordinates, this.state.selectedSquare!.coordinates)) {
+          this.unselectPiece(squareCoordinates);
+        } else { 
+          this.movePiece(squareCoordinates);
+        }
         break;
       default:
         console.log('Error');
@@ -224,7 +230,12 @@ class Game extends React.Component <{}, IGame> {
   }
 
   unselectPiece(squareCoordinates: BoardCoordinates) {
-
+    var newState = {
+      ...this.state,
+      selectedSquare: null,
+      currentPlayer: this.getWaitingPlayer(),
+    };
+    this.updateGamePhase(newState);
   }
 
   movePiece(squareCoordinates: BoardCoordinates) {
