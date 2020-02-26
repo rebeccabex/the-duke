@@ -29,6 +29,10 @@ export const boardSquareContainsEnemy = (boardSquare: BoardSquare, currentPlayer
   return boardSquare.piece !== null && boardSquare.piece.player.colour !== currentPlayer.colour;
 }
 
+export const boardSquareContainsFriendlyPiece = (boardSquare: BoardSquare, currentPlayer: Player): boolean => {
+  return boardSquare.piece !== null && boardSquare.piece.player.colour === currentPlayer.colour;
+}
+
 export const coordinatesEqual = (coordinates1: BoardCoordinates | null, coordinates2: BoardCoordinates | null): boolean => {
   return !!coordinates1 && !!coordinates2 && coordinates1.x === coordinates2.x && coordinates1.y === coordinates2.y;
 }

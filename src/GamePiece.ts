@@ -8,7 +8,8 @@ import {
   BoardSquare,
   boardSquareContainsEnemy,
   multiplyMoveVectorByScalar,
-  isStandardMoveBlocked
+  isStandardMoveBlocked,
+  boardSquareContainsFriendlyPiece
 } from "GameBoard";
 import { Player } from "Player";
 
@@ -198,6 +199,16 @@ export class MoveSet {
 
   getLegalTargetCoordinatesForCommands(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
     const legalSquares = new Array<BoardCoordinates>();
+    this.commands.forEach(command => {
+      const directedCommand = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(command, -1) : command;
+      const targetCoordinates = applyMoveToCoordinates(currentSquare.coordinates, directedCommand);
+      if (areValidCoordinates(targetCoordinates)) {
+        const targetSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, targetCoordinates));
+        if (targetSquare && boardSquareContainsFriendlyPiece(targetSquare, currentPlayer)) {
+          legalSquares.push(targetCoordinates);
+        }
+      }
+    });
     return legalSquares;
   }
 }
