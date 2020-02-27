@@ -25,10 +25,12 @@ export type MovableSquares = {
   commandSquares: Array<BoardSquare>;
 }
 
-export const emptyMovableSquares = {
-  movableSquares: Array<BoardSquare>(),
-  strikeSquares: Array<BoardSquare>(),
-  commandSquares: Array<BoardSquare>(),
+export const emptyMovableSquares = (): MovableSquares => {
+  return {
+    movableSquares: Array<BoardSquare>(),
+    strikeSquares: Array<BoardSquare>(),
+    commandSquares: Array<BoardSquare>()
+  };
 }
 
 export type BoardCoordinates = {x: number, y: number};
@@ -79,9 +81,11 @@ export const getCoordinatesFromMovableSquares = (movableSquares: MovableSquares)
 }
 
 export const isStandardMoveBlocked = (currentCoordinates: BoardCoordinates, move: BoardCoordinates, gameBoard: GameBoard): boolean => {
-  for (let i = 1; i < Math.max(Math.abs(move.x), Math.abs(move.y)); i++) {
-    var scalar = move.x < 0 || move.y < 0 ? -i : i;
-    const moveStep = applyMoveToCoordinates(currentCoordinates, multiplyMoveVectorByScalar(move, scalar));
+  const loopBound = Math.max(Math.abs(move.x), Math.abs(move.y));
+  for (let i = 1; i < loopBound; i++) {
+    var stepX = move.x === 0 ? 0 : move.x < 0 ? -i : i;
+    var stepY = move.y === 0 ? 0 : move.y < 0 ? -i : i;
+    const moveStep = applyMoveToCoordinates(currentCoordinates, { x: stepX, y: stepY });
     if (!boardSquareIsEmpty(gameBoard.find(square => coordinatesEqual(square.coordinates, moveStep)))) {
       return true;
     }
@@ -121,7 +125,7 @@ export const getAvailableMoveSquares = (
   gameBoard: GameBoard,
   currentPlayer: Player
 ): MovableSquares => {
-  const movableSquares = emptyMovableSquares;
+  const movableSquares = emptyMovableSquares();
   movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForStandardMoves(currentCoordinates, gameBoard, currentPlayer));
   movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForJumps(currentCoordinates, gameBoard, currentPlayer));
   movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForSlides(currentCoordinates, gameBoard, currentPlayer));

@@ -12,7 +12,6 @@ import {
   getOrthogonallyAdjacentSquares,
   BoardSquare,
   getAvailableMoveSquares,
-  moveIsCommand,
   MovableSquares,
   emptyMovableSquares,
   getCoordinatesFromMovableSquares,
@@ -50,7 +49,7 @@ class Game extends React.Component <{}, IGame> {
       selectedSquare: null,
       legalSquares: [],
       startPlayer: blackPlayer,
-      movableSquares: emptyMovableSquares,
+      movableSquares: emptyMovableSquares(),
     }
 
     this.createBags = this.createBags.bind(this);
@@ -147,6 +146,10 @@ class Game extends React.Component <{}, IGame> {
       .map(square => square.coordinates);
   }
 
+  getSquaresWithNextPlayersPieces(newState: IGame = this.state) {
+    return this.getSquaresWithCurrentPlayersPieces(newState, true);
+  }
+
   getLegalPieceMovingSquares(newState: IGame = this.state) {
     const { selectedSquare } = newState;
     if (!!selectedSquare) {
@@ -157,7 +160,7 @@ class Game extends React.Component <{}, IGame> {
       }
     }
     console.log('No piece selected');
-    return emptyMovableSquares;
+    return emptyMovableSquares();
   }
 
   updateGamePhase(newState: IGame = this.state) {
@@ -251,13 +254,14 @@ class Game extends React.Component <{}, IGame> {
       ...this.state,
       selectedSquare: null,
       gamePhase: 'ChoosingMove',
+      movableSquares: emptyMovableSquares(),
       legalSquares: this.getSquaresWithCurrentPlayersPieces(),
     });
   }
 
   movePiece(squareCoordinates: BoardCoordinates) {
     const activePiece = this.state.selectedSquare ? this.state.selectedSquare.piece : null;
-    if (activePiece){
+    if (activePiece) {
       activePiece.piece.flipPiece();
       if (this.state.movableSquares.commandSquares.some(
           square => coordinatesEqual(square.coordinates, squareCoordinates))
@@ -271,9 +275,11 @@ class Game extends React.Component <{}, IGame> {
           selectedSquare: null,
           gamePhase: 'ChoosingMove',
           currentPlayer: this.getWaitingPlayer(),
-          legalSquares: this.getSquaresWithCurrentPlayersPieces(this.state, true),
-          gameBoard: this.state.gameBoard.map(square =>
-            coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: activePiece} : square),
+          legalSquares: this.getSquaresWithNextPlayersPieces(this.state),
+          movableSquares: emptyMovableSquares(),
+          gameBoard: this.state.gameBoard.map(
+            square => coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: activePiece} : square
+          ),
         });
       } else {
         this.setState({
@@ -282,15 +288,16 @@ class Game extends React.Component <{}, IGame> {
           gamePhase: 'ChoosingMove',
           currentPlayer: this.getWaitingPlayer(),
           legalSquares: this.getSquaresWithCurrentPlayersPieces(this.state, true),
-          gameBoard: this.state.gameBoard.map(square => 
-            coordinatesEqual(square.coordinates, squareCoordinates)
-            ? { ...square, piece: activePiece}
-            : isTheSameSquare(square, this.state.selectedSquare)
-              ? { ...square, piece: null }
-              : square
+          movableSquares: emptyMovableSquares(),
+          gameBoard: this.state.gameBoard.map(
+            square => coordinatesEqual(square.coordinates, squareCoordinates)
+              ? { ...square, piece: activePiece}
+              : isTheSameSquare(square, this.state.selectedSquare)
+                ? { ...square, piece: null }
+                : square
           ),
         });
-    }
+      }
     }
   }
 
