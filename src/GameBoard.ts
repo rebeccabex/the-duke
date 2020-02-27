@@ -1,4 +1,4 @@
-import { PlayerPiece, MoveSet, GamePiece } from "GamePiece";
+import { PlayerPiece, MoveSet } from "GamePiece";
 import { Player } from "Player";
 
 export type GameBoard = Array<BoardSquare>;

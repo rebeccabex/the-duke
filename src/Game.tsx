@@ -15,7 +15,8 @@ import {
   MovableSquares,
   emptyMovableSquares,
   getCoordinatesFromMovableSquares,
-  isTheSameSquare
+  isTheSameSquare,
+  coordinatesInSelection
 } from 'GameBoard';
 import { Player, PlayerColours, FirstStartingPositions, SecondStartingPositions } from 'Player';
 import { GamePiece, PlayerPiece } from 'GamePiece';
@@ -229,7 +230,7 @@ class Game extends React.Component <{}, IGame> {
       case 'MovingPiece':
         if (coordinatesEqual(squareCoordinates, this.state.selectedSquare!.coordinates)) {
           this.unselectPiece();
-        } else { 
+        } else if (coordinatesInSelection(getCoordinatesFromMovableSquares(this.state.movableSquares), squareCoordinates)) { 
           this.movePiece(squareCoordinates);
         }
         break;
