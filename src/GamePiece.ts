@@ -27,6 +27,10 @@ export class GamePiece {
     this.isFlipped = false;
     this.position = startingPosition
   }
+
+  flipPiece() {
+    this.isFlipped = !this.isFlipped;
+  }
 }
 
 export class MoveSet {
@@ -78,8 +82,8 @@ export class MoveSet {
     this.commands.push(...targetSquares);
   }
 
-  getLegalTargetCoordinatesForStandardMoves(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
-    const legalSquares = new Array<BoardCoordinates>();
+  getLegalTargetSquaresForStandardMoves(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
+    const legalSquares = new Array<BoardSquare>();
     [this.moves].forEach(moveType =>
       moveType.forEach(move => {
         let newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(move, -1) : move;
@@ -90,10 +94,10 @@ export class MoveSet {
             if (boardSquareIsEmpty(newBoardSquare) || boardSquareContainsEnemy(newBoardSquare, currentPlayer)) {
               if (Math.abs(newMove.x) > 1 || Math.abs(newMove.y) > 1) {
                 if (!isStandardMoveBlocked(currentSquare.coordinates, newMove, gameBoard)) {
-                  legalSquares.push(newCoordinates);
+                  legalSquares.push(newBoardSquare);
                 }
               } else {
-                legalSquares.push(newCoordinates);
+                legalSquares.push(newBoardSquare);
               }
             }
           }
@@ -103,8 +107,8 @@ export class MoveSet {
     return legalSquares;
   }
 
-  getLegalTargetCoordinatesForJumps(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
-    const legalSquares = new Array<BoardCoordinates>();
+  getLegalTargetSquaresForJumps(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
+    const legalSquares = new Array<BoardSquare>();
     [this.jumps].forEach(moveType =>
       moveType.forEach(move => {
         let newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(move, -1) : move;
@@ -113,7 +117,7 @@ export class MoveSet {
           const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));
           if (!!newBoardSquare) {
             if (boardSquareIsEmpty(newBoardSquare) || boardSquareContainsEnemy(newBoardSquare, currentPlayer)) {
-              legalSquares.push(newCoordinates);
+              legalSquares.push(newBoardSquare);
             }
           }
         }
@@ -122,8 +126,8 @@ export class MoveSet {
     return legalSquares;
   }
 
-  getLegalTargetCoordinatesForSlides(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
-    const legalSquares = new Array<BoardCoordinates>();
+  getLegalTargetSquaresForSlides(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
+    const legalSquares = new Array<BoardSquare>();
     this.slides.forEach(move => {
       let tryNextSquare = true;
       let distance = 1;
@@ -135,10 +139,10 @@ export class MoveSet {
           const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));
           if (!!newBoardSquare) {
               if (boardSquareIsEmpty(newBoardSquare)) {
-                legalSquares.push(newCoordinates);
+                legalSquares.push(newBoardSquare);
                 distance++;
               } else if (boardSquareContainsEnemy(newBoardSquare, currentPlayer)) {
-                legalSquares.push(newCoordinates);
+                legalSquares.push(newBoardSquare);
                 tryNextSquare = false;
               } else {
                 tryNextSquare = false;
@@ -152,8 +156,8 @@ export class MoveSet {
    return legalSquares;
   }
 
-  getLegalTargetCoordinatesForJumpSlides(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
-    const legalSquares = new Array<BoardCoordinates>();
+  getLegalTargetSquaresForJumpSlides(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
+    const legalSquares = new Array<BoardSquare>();
     this.jumpSlides.forEach(move => {
       let tryNextSquare = true;
       let distance = 2;
@@ -165,10 +169,10 @@ export class MoveSet {
           const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));
           if (!!newBoardSquare) {
               if (boardSquareIsEmpty(newBoardSquare)) {
-                legalSquares.push(newCoordinates);
+                legalSquares.push(newBoardSquare);
                 distance++;
               } else if (boardSquareContainsEnemy(newBoardSquare, currentPlayer)) {
-                legalSquares.push(newCoordinates);
+                legalSquares.push(newBoardSquare);
                 tryNextSquare = false;
               } else {
                 tryNextSquare = false;
@@ -182,30 +186,30 @@ export class MoveSet {
    return legalSquares;
   }
 
-  getLegalTargetCoordinatesForStrikes(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
-    const legalSquares = new Array<BoardCoordinates>();
+  getLegalTargetSquaresForStrikes(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
+    const legalSquares = new Array<BoardSquare>();
     this.strikes.forEach(strike => {
       const directedStrike = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(strike, -1) : strike;
       const targetCoordinates = applyMoveToCoordinates(currentSquare.coordinates, directedStrike);
       if (areValidCoordinates(targetCoordinates)) {
         const targetSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, targetCoordinates));
         if (targetSquare && boardSquareContainsEnemy(targetSquare, currentPlayer)) {
-          legalSquares.push(targetCoordinates);
+          legalSquares.push(targetSquare);
         }
       }
     });
     return legalSquares;
   }
 
-  getLegalTargetCoordinatesForCommands(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
-    const legalSquares = new Array<BoardCoordinates>();
+  getLegalTargetSquaresForCommands(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
+    const legalSquares = new Array<BoardSquare>();
     this.commands.forEach(command => {
       const directedCommand = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(command, -1) : command;
       const targetCoordinates = applyMoveToCoordinates(currentSquare.coordinates, directedCommand);
       if (areValidCoordinates(targetCoordinates)) {
         const targetSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, targetCoordinates));
         if (targetSquare && boardSquareContainsFriendlyPiece(targetSquare, currentPlayer)) {
-          legalSquares.push(targetCoordinates);
+          legalSquares.push(targetSquare);
         }
       }
     });

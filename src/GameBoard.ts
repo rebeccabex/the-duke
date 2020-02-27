@@ -1,4 +1,4 @@
-import { PlayerPiece, MoveSet } from "GamePiece";
+import { PlayerPiece, MoveSet, GamePiece } from "GamePiece";
 import { Player } from "Player";
 
 export type GameBoard = Array<BoardSquare>;
@@ -19,6 +19,18 @@ export type BoardSquare = {
   piece: PlayerPiece | null;
 }
 
+export type MovableSquares = {
+  movableSquares: Array<BoardSquare>;
+  strikeSquares: Array<BoardSquare>;
+  commandSquares: Array<BoardSquare>;
+}
+
+export const emptyMovableSquares = {
+  movableSquares: Array<BoardSquare>(),
+  strikeSquares: Array<BoardSquare>(),
+  commandSquares: Array<BoardSquare>(),
+}
+
 export type BoardCoordinates = {x: number, y: number};
 
 export const boardSquareIsEmpty = (boardSquare?: BoardSquare): boolean => {
@@ -37,6 +49,10 @@ export const coordinatesEqual = (coordinates1: BoardCoordinates | null, coordina
   return !!coordinates1 && !!coordinates2 && coordinates1.x === coordinates2.x && coordinates1.y === coordinates2.y;
 }
 
+export const isTheSameSquare = (square1: BoardSquare | null, square2: BoardSquare | null): boolean => {
+  return !!square1 && !!square2 && coordinatesEqual(square1.coordinates, square2.coordinates);
+}
+
 export const applyMoveToCoordinates = (currentCoordinates: BoardCoordinates, move: BoardCoordinates): BoardCoordinates => {
   return {x: currentCoordinates.x + move.x, y: currentCoordinates.y + move.y};
 }
@@ -52,6 +68,14 @@ export const applyRangeOfMovesToCoordinates = (currentCoordinates: BoardCoordina
     rangeOfCoordinates.push(newCoordinates);
   }
   return rangeOfCoordinates;
+}
+
+export const getCoordinatesFromMovableSquares = (movableSquares: MovableSquares): BoardCoordinates[] => {
+  return [
+    ...movableSquares.movableSquares.map(square => square.coordinates),
+    ...movableSquares.strikeSquares.map(square => square.coordinates),
+    ...movableSquares.commandSquares.map(square => square.coordinates),
+  ];
 }
 
 export const isStandardMoveBlocked = (currentCoordinates: BoardCoordinates, move: BoardCoordinates, gameBoard: GameBoard): boolean => {
@@ -96,15 +120,16 @@ export const getAvailableMoveSquares = (
   currentCoordinates: BoardSquare,
   gameBoard: GameBoard,
   currentPlayer: Player
-): BoardCoordinates[] => {
-  const legalSquares = moveSet.getLegalTargetCoordinatesForStandardMoves(currentCoordinates, gameBoard, currentPlayer);
-  legalSquares.push(...moveSet.getLegalTargetCoordinatesForJumps(currentCoordinates, gameBoard, currentPlayer));
-  legalSquares.push(...moveSet.getLegalTargetCoordinatesForSlides(currentCoordinates, gameBoard, currentPlayer));
-  legalSquares.push(...moveSet.getLegalTargetCoordinatesForJumpSlides(currentCoordinates, gameBoard, currentPlayer));
-  legalSquares.push(...moveSet.getLegalTargetCoordinatesForStrikes(currentCoordinates, gameBoard, currentPlayer));
-  legalSquares.push(...moveSet.getLegalTargetCoordinatesForCommands(currentCoordinates, gameBoard, currentPlayer));
+): MovableSquares => {
+  const movableSquares = emptyMovableSquares;
+  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForStandardMoves(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForJumps(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForSlides(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForJumpSlides(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForStrikes(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForCommands(currentCoordinates, gameBoard, currentPlayer));
 
-  return legalSquares.filter((coordinates, index, range) => index === range.indexOf(coordinates));
+  return movableSquares;
 }
 
 export type GameStage = 'Start' | 'Setup' | 'Playing' | 'Finished';

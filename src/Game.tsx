@@ -11,7 +11,12 @@ import {
   createGameBoard,
   getOrthogonallyAdjacentSquares,
   BoardSquare,
-  getAvailableMoveSquares
+  getAvailableMoveSquares,
+  moveIsCommand,
+  MovableSquares,
+  emptyMovableSquares,
+  getCoordinatesFromMovableSquares,
+  isTheSameSquare
 } from 'GameBoard';
 import { Player, PlayerColours, FirstStartingPositions, SecondStartingPositions } from 'Player';
 import { GamePiece, PlayerPiece } from 'GamePiece';
@@ -26,6 +31,7 @@ interface IGame {
   gameBoard: GameBoard,
   selectedSquare: BoardSquare | null,
   legalSquares: Array<BoardCoordinates>,
+  movableSquares: MovableSquares,
 }
 
 class Game extends React.Component <{}, IGame> {
@@ -44,6 +50,7 @@ class Game extends React.Component <{}, IGame> {
       selectedSquare: null,
       legalSquares: [],
       startPlayer: blackPlayer,
+      movableSquares: emptyMovableSquares,
     }
 
     this.createBags = this.createBags.bind(this);
@@ -150,7 +157,7 @@ class Game extends React.Component <{}, IGame> {
       }
     }
     console.log('No piece selected');
-    return new Array<BoardCoordinates>();
+    return emptyMovableSquares;
   }
 
   updateGamePhase(newState: IGame = this.state) {
@@ -184,7 +191,13 @@ class Game extends React.Component <{}, IGame> {
         }
         break;
       case 'ChoosingMove':
-        newState = { ...newState, gamePhase: 'MovingPiece', legalSquares: this.getLegalPieceMovingSquares(newState) };
+        const movableSquares = this.getLegalPieceMovingSquares(newState)
+        newState = {
+          ...newState,
+          gamePhase: 'MovingPiece',
+          movableSquares: movableSquares,
+          legalSquares: getCoordinatesFromMovableSquares(movableSquares),
+        };
         break;
       case 'MovingPiece':
         newState = { ...newState, gamePhase: 'ChoosingMove', legalSquares: this.getSquaresWithCurrentPlayersPieces(newState) };
@@ -243,7 +256,42 @@ class Game extends React.Component <{}, IGame> {
   }
 
   movePiece(squareCoordinates: BoardCoordinates) {
+    const activePiece = this.state.selectedSquare ? this.state.selectedSquare.piece : null;
+    if (activePiece){
+      activePiece.piece.flipPiece();
+      if (this.state.movableSquares.commandSquares.some(
+          square => coordinatesEqual(square.coordinates, squareCoordinates))
+        ) {
 
+      } else if (this.state.movableSquares.strikeSquares.some(
+        square => coordinatesEqual(square.coordinates, squareCoordinates))
+      ) {
+        this.setState({
+          ...this.state,
+          selectedSquare: null,
+          gamePhase: 'ChoosingMove',
+          currentPlayer: this.getWaitingPlayer(),
+          legalSquares: this.getSquaresWithCurrentPlayersPieces(this.state, true),
+          gameBoard: this.state.gameBoard.map(square =>
+            coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: activePiece} : square),
+        });
+      } else {
+        this.setState({
+          ...this.state,
+          selectedSquare: null,
+          gamePhase: 'ChoosingMove',
+          currentPlayer: this.getWaitingPlayer(),
+          legalSquares: this.getSquaresWithCurrentPlayersPieces(this.state, true),
+          gameBoard: this.state.gameBoard.map(square => 
+            coordinatesEqual(square.coordinates, squareCoordinates)
+            ? { ...square, piece: activePiece}
+            : isTheSameSquare(square, this.state.selectedSquare)
+              ? { ...square, piece: null }
+              : square
+          ),
+        });
+    }
+    }
   }
 
   placePiece(gamePiece: GamePiece, player: Player, squareCoordinates: BoardCoordinates) {
