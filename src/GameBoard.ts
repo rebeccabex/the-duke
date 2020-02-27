@@ -130,8 +130,8 @@ export const getAvailableMoveSquares = (
   movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForJumps(currentCoordinates, gameBoard, currentPlayer));
   movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForSlides(currentCoordinates, gameBoard, currentPlayer));
   movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForJumpSlides(currentCoordinates, gameBoard, currentPlayer));
-  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForStrikes(currentCoordinates, gameBoard, currentPlayer));
-  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForCommands(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.strikeSquares.push(...moveSet.getLegalTargetSquaresForStrikes(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.commandSquares.push(...moveSet.getLegalTargetSquaresForCommands(currentCoordinates, gameBoard, currentPlayer));
 
   return movableSquares;
 }

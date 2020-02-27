@@ -279,7 +279,7 @@ class Game extends React.Component <{}, IGame> {
           legalSquares: this.getSquaresWithNextPlayersPieces(this.state),
           movableSquares: emptyMovableSquares(),
           gameBoard: this.state.gameBoard.map(
-            square => coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: activePiece} : square
+            square => coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: null} : square
           ),
         });
       } else {
