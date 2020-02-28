@@ -27,3 +27,24 @@ export class Footsoldier extends GamePiece {
     ]);
   }
 }
+
+export class Pikeman extends GamePiece {
+  constructor() {
+    super('Pikeman');
+    this.initialMoveSet.addMoves([
+      {"x": 1, "y": 1},
+      {"x": 2, "y": 2},
+      {"x": -1, "y": 1},
+      {"x": -2, "y": 2},
+    ]);
+    this.flippedMoveSet.addMoves([
+      {"x": 0, "y": -1},
+      {"x": 0, "y": -2},
+      {"x": 0, "y": 1},
+    ]);
+    this.flippedMoveSet.addStrikeSpots([
+      {"x": 1, "y": 2},
+      {"x": -1, "y": 2},
+    ])
+  }
+}

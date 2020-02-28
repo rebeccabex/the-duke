@@ -3,30 +3,25 @@ import { GamePiece } from 'GamePiece';
 
 interface IBagProps {
   colour: string,
-  pieces: GamePiece[]
+  pieces: GamePiece[],
+  ableToDraw: boolean,
+  drawFromBag: () => any,
 }
 
-export class Bag extends React.Component <IBagProps> {
-  constructor(props: any) {
-    super(props);
+const displayBagPieces = (pieces: GamePiece[]): JSX.Element => {
+  var piecesElement = new Array<JSX.Element>();
+  pieces.forEach(piece => 
+    piecesElement.push(<div>{piece.name}</div>)
+  );
+  return <div>{piecesElement}</div>;
+}
 
-    this.displayBagPieces = this.displayBagPieces.bind(this);
-  }
-
-  displayBagPieces() {
-    var pieces = new Array<JSX.Element>();
-    this.props.pieces.forEach(piece => 
-      pieces.push(<div>{piece.name}</div>)
-    );
-    return <div>{pieces}</div>;
-  }
-
-  render() {
-    return(
-      <div>
-        <h4>{this.props.colour}'s Bag</h4>
-        <div>{this.displayBagPieces()}</div>
-      </div>
-    )
-  }
+export const Bag = (props: IBagProps) => {
+  return(
+    <div>
+      <h4>{props.colour}'s Bag</h4>
+      {props.ableToDraw && <button onClick={props.drawFromBag}>Draw</button>}
+      <div>{displayBagPieces}</div>
+    </div>
+  )
 }

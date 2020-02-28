@@ -58,6 +58,7 @@ class Game extends React.Component <{}, IGame> {
     this.selectSquare = this.selectSquare.bind(this);
     this.getWaitingPlayer = this.getWaitingPlayer.bind(this);
     this.placeStartingPiece = this.placeStartingPiece.bind(this);
+    this.drawFromBag = this.drawFromBag.bind(this);
   }
 
   startGame() {
@@ -78,7 +79,13 @@ class Game extends React.Component <{}, IGame> {
   createBags() {
     var bags = new Array<JSX.Element>();
     this.state.players.forEach(player => {
-      bags.push(<Bag colour={player.colour} pieces={player.bagPieces}></Bag>);
+      const ableToDraw = this.state.gamePhase === 'ChoosingMove' && this.state.currentPlayer === player;
+      bags.push(<Bag
+        colour={player.colour}
+        pieces={player.bagPieces}
+        ableToDraw={ableToDraw}
+        drawFromBag={this.drawFromBag}
+      />);
     });
     return <div>{bags}</div>;
   }
@@ -115,6 +122,10 @@ class Game extends React.Component <{}, IGame> {
         gameInstruction = `Congratulations, ${this.state.currentPlayer.colour}`;
     }
     return <div className='game-instruction'>{gameInstruction}</div>;
+  }
+
+  drawFromBag() {
+
   }
 
   getPieceOnSquare(coordinates: BoardCoordinates): PlayerPiece | null {
