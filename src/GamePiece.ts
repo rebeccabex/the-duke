@@ -201,7 +201,7 @@ export class MoveSet {
     return legalSquares;
   }
 
-  getLegalTargetSquaresForCommands(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
+  getLegalPickUpSquaresForCommands(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
     const legalSquares = new Array<BoardSquare>();
     this.commands.forEach(command => {
       const directedCommand = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(command, -1) : command;
@@ -209,6 +209,21 @@ export class MoveSet {
       if (areValidCoordinates(targetCoordinates)) {
         const targetSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, targetCoordinates));
         if (targetSquare && boardSquareContainsFriendlyPiece(targetSquare, currentPlayer)) {
+          legalSquares.push(targetSquare);
+        }
+      }
+    });
+    return legalSquares;
+  }
+
+  getLegalMoveToSquaresForCommands(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
+    const legalSquares = new Array<BoardSquare>();
+    this.commands.forEach(command => {
+      const directedCommand = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(command, -1) : command;
+      const targetCoordinates = applyMoveToCoordinates(currentSquare.coordinates, directedCommand);
+      if (areValidCoordinates(targetCoordinates)) {
+        const targetSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, targetCoordinates));
+        if (targetSquare && (boardSquareIsEmpty(targetSquare) || boardSquareContainsEnemy(targetSquare, currentPlayer))) {
           legalSquares.push(targetSquare);
         }
       }

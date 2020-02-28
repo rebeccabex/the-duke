@@ -23,13 +23,15 @@ export type MovableSquares = {
   movableSquares: Array<BoardSquare>;
   strikeSquares: Array<BoardSquare>;
   commandSquares: Array<BoardSquare>;
+  commandStartSquare: BoardSquare | null;
 }
 
 export const emptyMovableSquares = (): MovableSquares => {
   return {
     movableSquares: Array<BoardSquare>(),
     strikeSquares: Array<BoardSquare>(),
-    commandSquares: Array<BoardSquare>()
+    commandSquares: Array<BoardSquare>(),
+    commandStartSquare: null,
   };
 }
 
@@ -131,7 +133,7 @@ export const getAvailableMoveSquares = (
   movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForSlides(currentCoordinates, gameBoard, currentPlayer));
   movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForJumpSlides(currentCoordinates, gameBoard, currentPlayer));
   movableSquares.strikeSquares.push(...moveSet.getLegalTargetSquaresForStrikes(currentCoordinates, gameBoard, currentPlayer));
-  movableSquares.commandSquares.push(...moveSet.getLegalTargetSquaresForCommands(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.commandSquares.push(...moveSet.getLegalPickUpSquaresForCommands(currentCoordinates, gameBoard, currentPlayer));
 
   return movableSquares;
 }

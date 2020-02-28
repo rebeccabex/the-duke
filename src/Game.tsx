@@ -261,16 +261,49 @@ class Game extends React.Component <{}, IGame> {
   }
 
   movePiece(squareCoordinates: BoardCoordinates) {
-    const activePiece = this.state.selectedSquare ? this.state.selectedSquare.piece : null;
-    if (activePiece) {
-      activePiece.piece.flipPiece();
-      if (this.state.movableSquares.commandSquares.some(
+    const { selectedSquare, gameBoard, currentPlayer, movableSquares } = this.state;
+    const activePiece = selectedSquare ? selectedSquare.piece : null;
+    if (selectedSquare && activePiece) {
+      if (movableSquares.commandSquares.some(
           square => coordinatesEqual(square.coordinates, squareCoordinates))
         ) {
-
-      } else if (this.state.movableSquares.strikeSquares.some(
+          if (!!movableSquares.commandStartSquare) {
+            const movingPiece = movableSquares.commandStartSquare.piece;
+            activePiece.piece.flipPiece();
+            this.setState({
+              ...this.state,
+              selectedSquare: null,
+              gamePhase: 'ChoosingMove',
+              currentPlayer: this.getWaitingPlayer(),
+              legalSquares: this.getSquaresWithNextPlayersPieces(this.state),
+              movableSquares: emptyMovableSquares(),
+              gameBoard: gameBoard.map(
+                square => coordinatesEqual(square.coordinates, squareCoordinates)
+                  ? { ...square, piece: movingPiece }
+                  : isTheSameSquare(square, movableSquares.commandStartSquare)
+                    ? { ...square, piece: null }
+                    : square
+              ),
+            });         
+          } else {
+            const moveSet = activePiece.piece.isFlipped ? activePiece.piece.flippedMoveSet : activePiece.piece.initialMoveSet;
+            const movableSquaresForCommand = emptyMovableSquares();
+            const commandStartSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, squareCoordinates));
+            movableSquaresForCommand.commandSquares = moveSet.getLegalMoveToSquaresForCommands(selectedSquare, gameBoard, currentPlayer);
+            if (commandStartSquare) {
+              movableSquaresForCommand.commandStartSquare = commandStartSquare;
+            }
+            this.setState({
+              ...this.state,
+              gamePhase: 'MovingPiece',
+              legalSquares: getCoordinatesFromMovableSquares(movableSquaresForCommand),
+              movableSquares: movableSquaresForCommand,
+            });
+          }
+      } else if (movableSquares.strikeSquares.some(
         square => coordinatesEqual(square.coordinates, squareCoordinates))
       ) {
+        activePiece.piece.flipPiece();
         this.setState({
           ...this.state,
           selectedSquare: null,
@@ -283,6 +316,7 @@ class Game extends React.Component <{}, IGame> {
           ),
         });
       } else {
+        activePiece.piece.flipPiece();
         this.setState({
           ...this.state,
           selectedSquare: null,
@@ -293,7 +327,7 @@ class Game extends React.Component <{}, IGame> {
           gameBoard: this.state.gameBoard.map(
             square => coordinatesEqual(square.coordinates, squareCoordinates)
               ? { ...square, piece: activePiece}
-              : isTheSameSquare(square, this.state.selectedSquare)
+              : isTheSameSquare(square, selectedSquare)
                 ? { ...square, piece: null }
                 : square
           ),
