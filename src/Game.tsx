@@ -57,8 +57,7 @@ class Game extends React.Component <{}, IGame> {
     this.startGame = this.startGame.bind(this);
     this.selectSquare = this.selectSquare.bind(this);
     this.getWaitingPlayer = this.getWaitingPlayer.bind(this);
-    this.updateGamePhase = this.updateGamePhase.bind(this);
-    this.placePiece = this.placePiece.bind(this);
+    this.placeStartingPiece = this.placeStartingPiece.bind(this);
   }
 
   startGame() {
@@ -127,9 +126,9 @@ class Game extends React.Component <{}, IGame> {
     return this.getPieceOnSquare(coordinates) === null;
   }
 
-  getLegalPlacingSquares(newState: IGame = this.state) {
-    const dukePosition = newState.gameBoard.find(
-      square => square.piece && square.piece.piece.name === 'Duke' && square.piece.player === this.getWaitingPlayer());
+  getLegalPlacingSquares(player: Player) {
+    const dukePosition = this.state.gameBoard.find(
+      square => square.piece && square.piece.piece.name === 'Duke' && square.piece.player === player);
 
     if (!!!dukePosition) {
       return [];
@@ -140,89 +139,69 @@ class Game extends React.Component <{}, IGame> {
   }
 
   // TODO: Filter out pieces that can't currently move
-  getSquaresWithCurrentPlayersPieces(newState: IGame = this.state, switchPlayers: boolean = false) {
-    const playerColour = switchPlayers ? this.getWaitingPlayer().colour : newState.currentPlayer.colour;
-    return newState.gameBoard
-      .filter(square => square.piece && square.piece.player.colour === playerColour)
+  getSquaresWithPlayersPieces(player: Player) {
+    return this.state.gameBoard
+      .filter(square => square.piece && square.piece.player.colour === player.colour)
       .map(square => square.coordinates);
   }
 
-  getSquaresWithNextPlayersPieces(newState: IGame = this.state) {
-    return this.getSquaresWithCurrentPlayersPieces(newState, true);
+  getSquaresWithCurrentPlayersPieces() {
+    return this.getSquaresWithPlayersPieces(this.state.currentPlayer);
   }
 
-  getLegalPieceMovingSquares(newState: IGame = this.state) {
-    const { selectedSquare } = newState;
-    if (!!selectedSquare) {
-      const selectedPiece = selectedSquare.piece;
+  getSquaresWithNextPlayersPieces() {
+    return this.getSquaresWithPlayersPieces(this.getWaitingPlayer());
+  }
+
+  getLegalPieceMovingSquares(clickedSquare: BoardSquare) {
+    const { gameBoard, currentPlayer } = this.state;
+    if (!!clickedSquare) {
+      const selectedPiece = clickedSquare.piece;
       if (!!selectedPiece) {
         const currentMoveSet = selectedPiece.piece.isFlipped ? selectedPiece.piece.flippedMoveSet: selectedPiece.piece.initialMoveSet;
-        return getAvailableMoveSquares(currentMoveSet, selectedSquare, newState.gameBoard, newState.currentPlayer);
+        return getAvailableMoveSquares(currentMoveSet, clickedSquare, gameBoard, currentPlayer);
       }
     }
     console.log('No piece selected');
     return emptyMovableSquares();
   }
 
-  updateGamePhase(newState: IGame = this.state) {
-    var { currentPlayer, startPlayer, gameStage, gamePhase } = newState;
-    switch(gamePhase) {
-      case 'PlacingDuke':
-        if (currentPlayer.colour === startPlayer.colour) {
-          newState = { ...newState, legalSquares: SecondStartingPositions, currentPlayer: this.getWaitingPlayer()};
-        } else {
-          newState = { ...newState, gamePhase: 'PlacingFootsoldier1', legalSquares: this.getLegalPlacingSquares(newState), currentPlayer: this.getWaitingPlayer() };
-        }
-        break;
-      case 'PlacingFootsoldier1': 
-        if (currentPlayer.colour === startPlayer.colour) {
-          newState = { ...newState, legalSquares: this.getLegalPlacingSquares(), currentPlayer: this.getWaitingPlayer()};
-        } else {
-          newState = { ...newState, gamePhase: 'PlacingFootsoldier2', legalSquares: this.getLegalPlacingSquares(newState), currentPlayer: this.getWaitingPlayer() };
-        }
-        break;
-      case 'PlacingFootsoldier2': 
-        if (currentPlayer.colour === startPlayer.colour) {
-          newState = { ...newState, legalSquares: this.getLegalPlacingSquares(), currentPlayer: this.getWaitingPlayer()};
-        } else {
-          newState = {
-            ...newState,
-            gameStage: 'Playing',
-            gamePhase: 'ChoosingMove',
-            legalSquares: this.getSquaresWithCurrentPlayersPieces(newState, true),
-            currentPlayer: this.getWaitingPlayer(),
-          };
-        }
-        break;
-      case 'ChoosingMove':
-        const movableSquares = this.getLegalPieceMovingSquares(newState)
-        newState = {
-          ...newState,
-          gamePhase: 'MovingPiece',
-          movableSquares: movableSquares,
-          legalSquares: getCoordinatesFromMovableSquares(movableSquares),
-        };
-        break;
-      case 'MovingPiece':
-        newState = { ...newState, gamePhase: 'ChoosingMove', legalSquares: this.getSquaresWithCurrentPlayersPieces(newState) };
-        break;
-      case null:
-        switch(gameStage) {
-          case 'Start':
-            newState = { ...newState, gameStage: 'Setup', gamePhase: 'PlacingDuke', currentPlayer: startPlayer };
-        }
+  getNextGamePhase(player: Player) {
+    if (player.colour === this.state.startPlayer.colour) {
+      return this.state.gamePhase;
     }
-    this.setState(newState);
+    switch(this.state.gamePhase) {
+      case 'PlacingDuke':
+        return 'PlacingFootsoldier1';
+      case 'PlacingFootsoldier1': 
+        return 'PlacingFootsoldier2';
+      case 'PlacingFootsoldier2': 
+        return 'ChoosingMove';
+      default:
+        return this.state.gamePhase;
+    }
+  }
+
+  getNextGameStage(player: Player) {
+    if (player.colour === this.state.startPlayer.colour) {
+      return this.state.gameStage;
+    }
+    switch (this.state.gamePhase) {
+      case 'PlacingFootsoldier2':
+        return 'Playing';
+      default:
+        return this.state.gameStage;
+    }
   }
 
   selectSquare(squareCoordinates: BoardCoordinates) {
     switch(this.state.gamePhase) {
       case 'PlacingDuke':
-        this.placePiece(new Duke(), this.state.currentPlayer, squareCoordinates);
+        this.placeStartingPiece(new Duke(), this.state.currentPlayer, squareCoordinates);
         break;
       case 'PlacingFootsoldier1':
       case 'PlacingFootsoldier2':
-        this.placePiece(new Footsoldier(), this.state.currentPlayer, squareCoordinates);
+        this.placeStartingPiece(new Footsoldier(), this.state.currentPlayer, squareCoordinates);
         break;
       case 'ChoosingMove':
         this.selectPiece(squareCoordinates);
@@ -240,13 +219,16 @@ class Game extends React.Component <{}, IGame> {
   }
 
   selectPiece(squareCoordinates: BoardCoordinates) {
-    const selectedSquare = this.state.gameBoard.find(square => coordinatesEqual(square.coordinates, squareCoordinates))
-    if (selectedSquare && selectedSquare.piece && selectedSquare.piece.player.colour === this.state.currentPlayer.colour) {
-      var newState = {
+    const clickedSquare = this.state.gameBoard.find(square => coordinatesEqual(square.coordinates, squareCoordinates))
+    if (clickedSquare && clickedSquare.piece && clickedSquare.piece.player.colour === this.state.currentPlayer.colour) {
+      const movableSquares = this.getLegalPieceMovingSquares(clickedSquare);
+      this.setState({
         ...this.state,
-        selectedSquare: selectedSquare === undefined ? null : selectedSquare,
-      };
-      this.updateGamePhase(newState);
+        selectedSquare: clickedSquare === undefined ? null : clickedSquare,
+        gamePhase: 'MovingPiece',
+        movableSquares: movableSquares,
+        legalSquares: getCoordinatesFromMovableSquares(movableSquares),
+      });
     }
   }
 
@@ -258,6 +240,45 @@ class Game extends React.Component <{}, IGame> {
       movableSquares: emptyMovableSquares(),
       legalSquares: this.getSquaresWithCurrentPlayersPieces(),
     });
+  }
+
+  placeStartingPiece(gamePiece: GamePiece, player: Player, squareCoordinates: BoardCoordinates) {
+    var pieceToPlace: PlayerPiece = { player, piece: gamePiece };
+
+    const nextGamePhase = this.getNextGamePhase(player);
+    const nextGameStage = this.getNextGameStage(player);
+
+    const legalPlacingSquares = this.getLegalSquaresForNextStep(nextGamePhase, this.getWaitingPlayer());
+
+    this.setState({
+      ...this.state,
+      gameBoard: this.state.gameBoard.map((square) =>
+        coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: pieceToPlace} : square),
+      currentPlayer: this.getWaitingPlayer(),
+      gamePhase: nextGamePhase,
+      gameStage: nextGameStage,
+      legalSquares: legalPlacingSquares,
+    });
+  }
+
+  getLegalSquaresForNextStep(nextGamePhase: GamePhase, nextPlayer: Player) {
+    switch (nextGamePhase) {
+      case 'PlacingDuke':
+        if (nextPlayer.colour === this.state.startPlayer.colour) {
+          return FirstStartingPositions;
+        } else {
+          return SecondStartingPositions;
+        }
+      case 'PlacingFootsoldier1':
+        return this.getLegalPlacingSquares(nextPlayer);
+      case 'PlacingFootsoldier2':
+        return this.getLegalPlacingSquares(nextPlayer);
+      case 'ChoosingMove':
+        return this.getSquaresWithNextPlayersPieces();
+      default:
+        console.log('Invalid game phase');
+        return [];
+    }
   }
 
   movePiece(squareCoordinates: BoardCoordinates) {
@@ -310,7 +331,7 @@ class Game extends React.Component <{}, IGame> {
       selectedSquare: null,
       gamePhase: 'ChoosingMove',
       currentPlayer: this.getWaitingPlayer(),
-      legalSquares: this.getSquaresWithNextPlayersPieces(this.state),
+      legalSquares: this.getSquaresWithNextPlayersPieces(),
       movableSquares: emptyMovableSquares(),
       gameBoard: gameBoard.map(
         square => coordinatesEqual(square.coordinates, squareCoordinates)
@@ -329,7 +350,7 @@ class Game extends React.Component <{}, IGame> {
       selectedSquare: null,
       gamePhase: 'ChoosingMove',
       currentPlayer: this.getWaitingPlayer(),
-      legalSquares: this.getSquaresWithNextPlayersPieces(this.state),
+      legalSquares: this.getSquaresWithNextPlayersPieces(),
       movableSquares: emptyMovableSquares(),
       gameBoard: this.state.gameBoard.map(
         square => coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: null} : square
@@ -344,7 +365,7 @@ class Game extends React.Component <{}, IGame> {
       selectedSquare: null,
       gamePhase: 'ChoosingMove',
       currentPlayer: this.getWaitingPlayer(),
-      legalSquares: this.getSquaresWithCurrentPlayersPieces(this.state, true),
+      legalSquares: this.getSquaresWithNextPlayersPieces(),
       movableSquares: emptyMovableSquares(),
       gameBoard: this.state.gameBoard.map(
         square => coordinatesEqual(square.coordinates, squareCoordinates)
@@ -354,17 +375,6 @@ class Game extends React.Component <{}, IGame> {
             : square
       ),
     });
-  }
-
-  placePiece(gamePiece: GamePiece, player: Player, squareCoordinates: BoardCoordinates) {
-    var pieceToPlace: PlayerPiece = { player, piece: gamePiece };
-
-    var newState = {
-      ...this.state,
-      gameBoard: this.state.gameBoard.map((square) =>
-        coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: pieceToPlace} : square)
-    };
-    this.updateGamePhase(newState);
   }
 
   render() {
