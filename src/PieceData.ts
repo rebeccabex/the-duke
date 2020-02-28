@@ -28,6 +28,13 @@ export class Footsoldier extends GamePiece {
   }
 }
 
+export const BagPieceList = [
+  'Pikeman',
+  'Pikeman',
+  'Pikeman',
+  'Footsoldier',
+]
+
 export class Pikeman extends GamePiece {
   constructor() {
     super('Pikeman');

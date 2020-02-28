@@ -20,7 +20,7 @@ import {
 } from 'GameBoard';
 import { Player, PlayerColours, FirstStartingPositions, SecondStartingPositions } from 'Player';
 import { GamePiece, PlayerPiece } from 'GamePiece';
-import { Duke, Footsoldier } from 'PieceData';
+import { Duke, Footsoldier, BagPieceList } from 'PieceData';
 
 interface IGame {
   players: Player[],
@@ -62,14 +62,26 @@ class Game extends React.Component <{}, IGame> {
   }
 
   startGame() {
+    const playersWithBagPieces = this.state.players.map(player => {
+      return { ...player, bagPieces: this.addPiecesToBag() }
+    });
     this.setState({
       ...this.state,
       gameStage: 'Setup',
       gamePhase: 'PlacingDuke',
       legalSquares: FirstStartingPositions,
-      currentPlayer: this.state.startPlayer
+      currentPlayer: this.state.startPlayer,
+      players: playersWithBagPieces,
     });
   };
+
+  addPiecesToBag() {
+    const BagPieces = Array<GamePiece>();
+    BagPieceList.forEach(pieceName => {
+      BagPieces.push(new GamePiece(pieceName));
+    });
+    return BagPieces;
+  }
 
   getWaitingPlayer() {
     var currentPlayerIndex = this.state.players.findIndex(player => player.colour === this.state.currentPlayer.colour);
@@ -79,7 +91,7 @@ class Game extends React.Component <{}, IGame> {
   createBags() {
     var bags = new Array<JSX.Element>();
     this.state.players.forEach(player => {
-      const ableToDraw = this.state.gamePhase === 'ChoosingMove' && this.state.currentPlayer === player;
+      const ableToDraw = this.state.gamePhase === 'ChoosingMove' && this.state.currentPlayer.colour === player.colour;
       bags.push(<Bag
         colour={player.colour}
         pieces={player.bagPieces}
@@ -139,7 +151,7 @@ class Game extends React.Component <{}, IGame> {
 
   getLegalPlacingSquares(player: Player) {
     const dukePosition = this.state.gameBoard.find(
-      square => square.piece && square.piece.piece.name === 'Duke' && square.piece.player === player);
+      square => square.piece && square.piece.piece.name === 'Duke' && square.piece.player.colour === player.colour);
 
     if (!!!dukePosition) {
       return [];
