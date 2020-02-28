@@ -261,79 +261,99 @@ class Game extends React.Component <{}, IGame> {
   }
 
   movePiece(squareCoordinates: BoardCoordinates) {
-    const { selectedSquare, gameBoard, currentPlayer, movableSquares } = this.state;
+    const { selectedSquare, movableSquares } = this.state;
     const activePiece = selectedSquare ? selectedSquare.piece : null;
-    if (selectedSquare && activePiece) {
+    if (activePiece) {
       if (movableSquares.commandSquares.some(
           square => coordinatesEqual(square.coordinates, squareCoordinates))
         ) {
-          if (!!movableSquares.commandStartSquare) {
-            const movingPiece = movableSquares.commandStartSquare.piece;
-            activePiece.piece.flipPiece();
-            this.setState({
-              ...this.state,
-              selectedSquare: null,
-              gamePhase: 'ChoosingMove',
-              currentPlayer: this.getWaitingPlayer(),
-              legalSquares: this.getSquaresWithNextPlayersPieces(this.state),
-              movableSquares: emptyMovableSquares(),
-              gameBoard: gameBoard.map(
-                square => coordinatesEqual(square.coordinates, squareCoordinates)
-                  ? { ...square, piece: movingPiece }
-                  : isTheSameSquare(square, movableSquares.commandStartSquare)
-                    ? { ...square, piece: null }
-                    : square
-              ),
-            });         
+          if (movableSquares.commandStartSquare) {
+            this.carryOutCommand(squareCoordinates, activePiece);
           } else {
-            const moveSet = activePiece.piece.isFlipped ? activePiece.piece.flippedMoveSet : activePiece.piece.initialMoveSet;
-            const movableSquaresForCommand = emptyMovableSquares();
-            const commandStartSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, squareCoordinates));
-            movableSquaresForCommand.commandSquares = moveSet.getLegalMoveToSquaresForCommands(selectedSquare, gameBoard, currentPlayer);
-            if (commandStartSquare) {
-              movableSquaresForCommand.commandStartSquare = commandStartSquare;
-            }
-            this.setState({
-              ...this.state,
-              gamePhase: 'MovingPiece',
-              legalSquares: getCoordinatesFromMovableSquares(movableSquaresForCommand),
-              movableSquares: movableSquaresForCommand,
-            });
+            this.selectPieceToCommand(squareCoordinates, activePiece);
           }
       } else if (movableSquares.strikeSquares.some(
         square => coordinatesEqual(square.coordinates, squareCoordinates))
       ) {
-        activePiece.piece.flipPiece();
-        this.setState({
-          ...this.state,
-          selectedSquare: null,
-          gamePhase: 'ChoosingMove',
-          currentPlayer: this.getWaitingPlayer(),
-          legalSquares: this.getSquaresWithNextPlayersPieces(this.state),
-          movableSquares: emptyMovableSquares(),
-          gameBoard: this.state.gameBoard.map(
-            square => coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: null} : square
-          ),
-        });
+        this.carryOutStrike(squareCoordinates, activePiece);
       } else {
-        activePiece.piece.flipPiece();
-        this.setState({
-          ...this.state,
-          selectedSquare: null,
-          gamePhase: 'ChoosingMove',
-          currentPlayer: this.getWaitingPlayer(),
-          legalSquares: this.getSquaresWithCurrentPlayersPieces(this.state, true),
-          movableSquares: emptyMovableSquares(),
-          gameBoard: this.state.gameBoard.map(
-            square => coordinatesEqual(square.coordinates, squareCoordinates)
-              ? { ...square, piece: activePiece}
-              : isTheSameSquare(square, selectedSquare)
-                ? { ...square, piece: null }
-                : square
-          ),
-        });
+        this.carryOutMovement(squareCoordinates, activePiece);
       }
     }
+  }
+
+  selectPieceToCommand(squareCoordinates: BoardCoordinates, activePiece: PlayerPiece) {
+    const { gameBoard, selectedSquare, currentPlayer } = this.state;
+    const moveSet = activePiece.piece.isFlipped ? activePiece.piece.flippedMoveSet : activePiece.piece.initialMoveSet;
+    const movableSquaresForCommand = emptyMovableSquares();
+    const commandStartSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, squareCoordinates));
+    if (selectedSquare) {
+      movableSquaresForCommand.commandSquares = moveSet.getLegalMoveToSquaresForCommands(selectedSquare, gameBoard, currentPlayer);
+    }
+    if (commandStartSquare) {
+      movableSquaresForCommand.commandStartSquare = commandStartSquare;
+    }
+    this.setState({
+      ...this.state,
+      gamePhase: 'MovingPiece',
+      legalSquares: getCoordinatesFromMovableSquares(movableSquaresForCommand),
+      movableSquares: movableSquaresForCommand,
+    });
+  }
+
+  carryOutCommand(squareCoordinates: BoardCoordinates, activePiece: PlayerPiece) {
+    const { gameBoard, movableSquares } = this.state;
+    const movingPiece = movableSquares.commandStartSquare!.piece;
+    activePiece.piece.flipPiece();
+    this.setState({
+      ...this.state,
+      selectedSquare: null,
+      gamePhase: 'ChoosingMove',
+      currentPlayer: this.getWaitingPlayer(),
+      legalSquares: this.getSquaresWithNextPlayersPieces(this.state),
+      movableSquares: emptyMovableSquares(),
+      gameBoard: gameBoard.map(
+        square => coordinatesEqual(square.coordinates, squareCoordinates)
+          ? { ...square, piece: movingPiece }
+          : isTheSameSquare(square, movableSquares.commandStartSquare)
+            ? { ...square, piece: null }
+            : square
+      ),
+    });
+  }
+
+  carryOutStrike(squareCoordinates: BoardCoordinates, activePiece: PlayerPiece) {
+    activePiece.piece.flipPiece();
+    this.setState({
+      ...this.state,
+      selectedSquare: null,
+      gamePhase: 'ChoosingMove',
+      currentPlayer: this.getWaitingPlayer(),
+      legalSquares: this.getSquaresWithNextPlayersPieces(this.state),
+      movableSquares: emptyMovableSquares(),
+      gameBoard: this.state.gameBoard.map(
+        square => coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: null} : square
+      ),
+    });
+  }
+
+  carryOutMovement(squareCoordinates: BoardCoordinates, activePiece: PlayerPiece) {
+    activePiece.piece.flipPiece();
+    this.setState({
+      ...this.state,
+      selectedSquare: null,
+      gamePhase: 'ChoosingMove',
+      currentPlayer: this.getWaitingPlayer(),
+      legalSquares: this.getSquaresWithCurrentPlayersPieces(this.state, true),
+      movableSquares: emptyMovableSquares(),
+      gameBoard: this.state.gameBoard.map(
+        square => coordinatesEqual(square.coordinates, squareCoordinates)
+          ? { ...square, piece: activePiece}
+          : isTheSameSquare(square, this.state.selectedSquare)
+            ? { ...square, piece: null }
+            : square
+      ),
+    });
   }
 
   placePiece(gamePiece: GamePiece, player: Player, squareCoordinates: BoardCoordinates) {
