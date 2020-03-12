@@ -21,7 +21,7 @@ export const Bag = (props: IBagProps) => {
     <div>
       <h4>{props.colour}'s Bag</h4>
       {props.ableToDraw && <button onClick={props.drawFromBag}>Draw</button>}
-      <div>{displayBagPieces}</div>
+      <div>{displayBagPieces(props.pieces)}</div>
     </div>
   )
 }

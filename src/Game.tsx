@@ -32,6 +32,7 @@ interface IGame {
   selectedSquare: BoardSquare | null,
   legalSquares: Array<BoardCoordinates>,
   movableSquares: MovableSquares,
+  pieceToPlace: PlayerPiece | null,
 }
 
 class Game extends React.Component <{}, IGame> {
@@ -51,13 +52,14 @@ class Game extends React.Component <{}, IGame> {
       legalSquares: [],
       startPlayer: blackPlayer,
       movableSquares: emptyMovableSquares(),
+      pieceToPlace: null,
     }
 
     this.createBags = this.createBags.bind(this);
     this.startGame = this.startGame.bind(this);
     this.selectSquare = this.selectSquare.bind(this);
     this.getWaitingPlayer = this.getWaitingPlayer.bind(this);
-    this.placeStartingPiece = this.placeStartingPiece.bind(this);
+    this.placePiece = this.placePiece.bind(this);
     this.drawFromBag = this.drawFromBag.bind(this);
   }
 
@@ -134,10 +136,6 @@ class Game extends React.Component <{}, IGame> {
         gameInstruction = `Congratulations, ${this.state.currentPlayer.colour}`;
     }
     return <div className='game-instruction'>{gameInstruction}</div>;
-  }
-
-  drawFromBag() {
-
   }
 
   getPieceOnSquare(coordinates: BoardCoordinates): PlayerPiece | null {
@@ -220,11 +218,11 @@ class Game extends React.Component <{}, IGame> {
   selectSquare(squareCoordinates: BoardCoordinates) {
     switch(this.state.gamePhase) {
       case 'PlacingDuke':
-        this.placeStartingPiece(new Duke(), this.state.currentPlayer, squareCoordinates);
+        this.placePiece(new Duke(), this.state.currentPlayer, squareCoordinates);
         break;
       case 'PlacingFootsoldier1':
       case 'PlacingFootsoldier2':
-        this.placeStartingPiece(new Footsoldier(), this.state.currentPlayer, squareCoordinates);
+        this.placePiece(new Footsoldier(), this.state.currentPlayer, squareCoordinates);
         break;
       case 'ChoosingMove':
         this.selectPiece(squareCoordinates);
@@ -234,6 +232,11 @@ class Game extends React.Component <{}, IGame> {
           this.unselectPiece();
         } else if (coordinatesInSelection(getCoordinatesFromMovableSquares(this.state.movableSquares), squareCoordinates)) { 
           this.movePiece(squareCoordinates);
+        }
+        break;
+      case 'PlacingPiece':
+        if (this.state.pieceToPlace) {
+          this.placePiece(this.state.pieceToPlace.piece, this.state.pieceToPlace.player, squareCoordinates);
         }
         break;
       default:
@@ -265,10 +268,12 @@ class Game extends React.Component <{}, IGame> {
     });
   }
 
-  placeStartingPiece(gamePiece: GamePiece, player: Player, squareCoordinates: BoardCoordinates) {
+  placePiece(gamePiece: GamePiece, player: Player, squareCoordinates: BoardCoordinates) {
     var pieceToPlace: PlayerPiece = { player, piece: gamePiece };
 
-    const nextGamePhase = this.getNextGamePhase(player);
+    const nextGamePhase = this.state.gamePhase === 'PlacingPiece' 
+      ? 'ChoosingMove'
+      : this.getNextGamePhase(player);
     const nextGameStage = this.getNextGameStage(player);
 
     const legalPlacingSquares = this.getLegalSquaresForNextStep(nextGamePhase, this.getWaitingPlayer());
@@ -398,6 +403,25 @@ class Game extends React.Component <{}, IGame> {
             : square
       ),
     });
+  }
+
+  drawFromBag() {
+    const { bagPieces } = this.state.currentPlayer;
+    var drawnPiece = bagPieces[Math.floor(Math.random() * bagPieces.length)];
+    this.setState({
+      ...this.state,
+      gamePhase: 'PlacingPiece',
+      legalSquares: this.getLegalPlacingSquares(this.state.currentPlayer),
+      players: this.state.players.map(
+        player => player === this.state.currentPlayer
+        ? {
+          ...player,
+          bagPieces: player.bagPieces.filter(piece => piece !== drawnPiece)
+        }
+        : player
+      ),
+      pieceToPlace: { piece: drawnPiece, player: this.state.currentPlayer },
+    })
   }
 
   render() {
