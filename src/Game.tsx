@@ -20,7 +20,7 @@ import {
 } from 'GameBoard';
 import { Player, PlayerColours, FirstStartingPositions, SecondStartingPositions } from 'Player';
 import { GamePiece, PlayerPiece } from 'GamePiece';
-import { Duke, Footsoldier, BagPieceList } from 'PieceData';
+import { Duke, Footsoldier, BagPieceList, createNewPiece } from 'PieceData';
 
 interface IGame {
   players: Player[],
@@ -80,7 +80,10 @@ class Game extends React.Component <{}, IGame> {
   addPiecesToBag() {
     const BagPieces = Array<GamePiece>();
     BagPieceList.forEach(pieceName => {
-      BagPieces.push(new GamePiece(pieceName));
+      const newPiece = createNewPiece(pieceName);
+      if (newPiece !== null) {
+        BagPieces.push(newPiece);
+      }
     });
     return BagPieces;
   }
@@ -322,8 +325,8 @@ class Game extends React.Component <{}, IGame> {
             this.selectPieceToCommand(squareCoordinates, activePiece);
           }
       } else if (movableSquares.strikeSquares.some(
-        square => coordinatesEqual(square.coordinates, squareCoordinates))
-      ) {
+        square => coordinatesEqual(square.coordinates, squareCoordinates)
+      )) {
         this.carryOutStrike(squareCoordinates, activePiece);
       } else {
         this.carryOutMovement(squareCoordinates, activePiece);

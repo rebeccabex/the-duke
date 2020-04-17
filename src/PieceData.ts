@@ -1,5 +1,26 @@
 import { GamePiece } from "GamePiece";
 
+export const BagPieceList = [
+  'Pikeman',
+  'Pikeman',
+  'Pikeman',
+  'Footsoldier',
+]
+
+export const createNewPiece = (pieceName: string): GamePiece | null => {
+  switch(pieceName) {
+    case 'Duke':
+      return new Duke();
+    case 'Footsoldier':
+      return new Footsoldier();
+    case 'Pikeman': 
+      return new Pikeman();
+    default:
+      console.log(`Cannot create piece, invalid piece name '${pieceName}'`)
+      return null;
+  }
+}
+
 export class Duke extends GamePiece {
   constructor() {
     super('Duke');
@@ -27,13 +48,6 @@ export class Footsoldier extends GamePiece {
     ]);
   }
 }
-
-export const BagPieceList = [
-  'Pikeman',
-  'Pikeman',
-  'Pikeman',
-  'Footsoldier',
-]
 
 export class Pikeman extends GamePiece {
   constructor() {
