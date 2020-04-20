@@ -1,13 +1,13 @@
 import React from 'react';
 import './square.css';
-import { PlayerPiece } from 'GamePiece';
+import { GamePiece } from 'GamePiece';
 import { BoardCoordinates, GameStage, GamePhase } from 'GameBoard';
 import { Tile } from 'Tile';
 import { Player } from 'Player';
 
 interface ISquareProps {
     coordinates: BoardCoordinates;
-    piece: PlayerPiece | null;
+    piece: GamePiece | null;
     selected: boolean;
     highlighted: boolean;
     clickSquare: (coordinates: BoardCoordinates) => any;

@@ -23,3 +23,8 @@ export enum PlayerColours {
 
 export var FirstStartingPositions = [{ x: 2, y: 5 }, { x: 3, y: 5 }];
 export var SecondStartingPositions = [{ x: 2, y: 0 }, { x: 3, y: 0 }];
+
+export const getWaitingPlayer = (players: Array<Player>, currentPlayer: Player): Player => {
+  var currentPlayerIndex = players.findIndex(player => player.colour === currentPlayer.colour);
+  return players[-currentPlayerIndex + 1];
+}

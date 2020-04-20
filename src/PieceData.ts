@@ -1,4 +1,5 @@
 import { GamePiece } from "GamePiece";
+import { Player } from "Player";
 
 export const BagPieceList = [
   'Pikeman',
@@ -7,14 +8,14 @@ export const BagPieceList = [
   'Footsoldier',
 ]
 
-export const createNewPiece = (pieceName: string): GamePiece | null => {
+export const createNewPiece = (pieceName: string, colour: string): GamePiece | null => {
   switch(pieceName) {
     case 'Duke':
-      return new Duke();
+      return new Duke(colour);
     case 'Footsoldier':
-      return new Footsoldier();
+      return new Footsoldier(colour);
     case 'Pikeman': 
-      return new Pikeman();
+      return new Pikeman(colour);
     default:
       console.log(`Cannot create piece, invalid piece name '${pieceName}'`)
       return null;
@@ -22,8 +23,8 @@ export const createNewPiece = (pieceName: string): GamePiece | null => {
 }
 
 export class Duke extends GamePiece {
-  constructor() {
-    super('Duke');
+  constructor(colour: string) {
+    super('Duke', colour);
     this.initialMoveSet.addSlides([{"x": 1, "y": 0}, {"x": -1, "y": 0}]);
     
     this.flippedMoveSet.addSlides([{"x": 0, "y": -1}, {"x": 0, "y": 1}]);
@@ -31,8 +32,8 @@ export class Duke extends GamePiece {
 }
 
 export class Footsoldier extends GamePiece {
-  constructor() {
-    super('Footsoldier');
+  constructor(colour: string) {
+    super('Footsoldier', colour);
     this.initialMoveSet.addMoves([
       {"x": 0, "y": 1},
       {"x": 0, "y": -1},
@@ -50,8 +51,8 @@ export class Footsoldier extends GamePiece {
 }
 
 export class Pikeman extends GamePiece {
-  constructor() {
-    super('Pikeman');
+  constructor(colour: string) {
+    super('Pikeman', colour);
     this.initialMoveSet.addMoves([
       {"x": 1, "y": 1},
       {"x": 2, "y": 2},

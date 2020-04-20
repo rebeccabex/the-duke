@@ -1,4 +1,4 @@
-import { PlayerPiece } from "GamePiece";
+import { GamePiece } from "GamePiece";
 import { Player } from "Player";
 import { MoveSet } from "MoveSet";
 
@@ -17,7 +17,7 @@ export const createGameBoard = (): Array<BoardSquare>  => {
 
 export type BoardSquare = {
   coordinates: BoardCoordinates;
-  piece: PlayerPiece | null;
+  piece: GamePiece | null;
 }
 
 export type MovableSquares = {
@@ -43,11 +43,11 @@ export const boardSquareIsEmpty = (boardSquare?: BoardSquare): boolean => {
 }
 
 export const boardSquareContainsEnemy = (boardSquare: BoardSquare, currentPlayer: Player): boolean => {
-  return boardSquare.piece !== null && boardSquare.piece.player.colour !== currentPlayer.colour;
+  return boardSquare.piece !== null && boardSquare.piece.colour !== currentPlayer.colour;
 }
 
 export const boardSquareContainsFriendlyPiece = (boardSquare: BoardSquare, currentPlayer: Player): boolean => {
-  return boardSquare.piece !== null && boardSquare.piece.player.colour === currentPlayer.colour;
+  return boardSquare.piece !== null && boardSquare.piece.colour === currentPlayer.colour;
 }
 
 export const coordinatesEqual = (coordinates1: BoardCoordinates | null, coordinates2: BoardCoordinates | null): boolean => {
@@ -138,11 +138,3 @@ export const getAvailableMoveSquares = (
 
   return movableSquares;
 }
-
-export type GameStage = 'Start' | 'Setup' | 'Playing' | 'Finished';
-
-export type GamePhase = SetupPhase | PlayingPhase | null;
-
-export type SetupPhase = 'PlacingDuke' | 'PlacingFootsoldier1' | 'PlacingFootsoldier2'
-
-export type PlayingPhase = 'ChoosingMove' | 'MovingPiece' | 'PlacingPiece';

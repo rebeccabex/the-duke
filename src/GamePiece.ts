@@ -1,6 +1,6 @@
 import { BoardCoordinates } from "GameBoard";
-import { Player } from "Player";
 import { MoveSet } from "MoveSet";
+import { Duke, Footsoldier, Pikeman } from "PieceData";
 
 export class GamePiece {
   name: string;
@@ -8,21 +8,18 @@ export class GamePiece {
   flippedMoveSet: MoveSet;
   isFlipped: boolean;
   position: BoardCoordinates | null;
+  colour: string;
   
-  constructor(name: string, startingPosition: BoardCoordinates | null = null) {
+  constructor(name: string, colour: string, startingPosition: BoardCoordinates | null = null) {
     this.name = name;
     this.initialMoveSet = new MoveSet();
     this.flippedMoveSet = new MoveSet();
     this.isFlipped = false;
-    this.position = startingPosition
+    this.position = startingPosition;
+    this.colour = colour;
   }
 
   flipPiece() {
     this.isFlipped = !this.isFlipped;
   }
-}
-
-export type PlayerPiece = {
-  player: Player,
-  piece: GamePiece,
 }

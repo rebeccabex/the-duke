@@ -1,9 +1,9 @@
 import React from 'react';
-import { PlayerPiece } from 'GamePiece';
+import { GamePiece } from 'GamePiece';
 import './tile.css';
 
 interface ITileProps {
-  piece: PlayerPiece;
+  piece: GamePiece;
   selected: boolean,
   clickable: boolean,
   onClick: () => any,
@@ -11,14 +11,14 @@ interface ITileProps {
 
 export const Tile = (props: ITileProps) => {
   const tileClassName = props.selected
-    ? `button ${props.piece.player.colour} tile-selected`
+    ? `button ${props.piece.colour} tile-selected`
     : props.clickable 
-      ? `button ${props.piece.player.colour} tile-clickable`
-      : `button ${props.piece.player.colour} tile-normal`;
+      ? `button ${props.piece.colour} tile-clickable`
+      : `button ${props.piece.colour} tile-normal`;
 
-  const orientation = props.piece.piece.isFlipped ? "R" : "I";
+  const orientation = props.piece.isFlipped ? "R" : "I";
 
   return(
-    <button className={tileClassName} onClick={props.onClick}>{`${props.piece.piece.name} ${orientation}`}</button>
+    <button className={tileClassName} onClick={props.onClick}>{`${props.piece.name} ${orientation}`}</button>
   )
 }
