@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import { Bag } from './Bag';
 import { Board } from './Board';
-import { GameStage, GamePhase } from 'GamePhases'
+import { GameStage, GamePhase, getMovementType } from 'GamePhases'
 import {
   BoardCoordinates,
   GameBoard,
@@ -15,7 +15,11 @@ import {
   emptyMovableSquares,
   getCoordinatesFromMovableSquares,
   isTheSameSquare,
-  coordinatesInSelection
+  coordinatesInSelection,
+  boardCoordinatesToString,
+  getSquaresWithPlayersPieces,
+  getCoordinatesFromMovableCommandSquares,
+  getCoordinatesFromBoardSquares
 } from 'GameBoard';
 import {
   Player,
@@ -236,6 +240,13 @@ class Game extends React.Component <{}, IGame> {
           this.movePiece(squareCoordinates);
         }
         break;
+      case 'CarryingOutCommand':
+        if (coordinatesEqual(squareCoordinates, this.state.selectedSquare!.coordinates)) {
+          this.unselectPiece();
+        } else if (coordinatesInSelection(getCoordinatesFromMovableCommandSquares(this.state.movableSquares), squareCoordinates)) { 
+          this.movePiece(squareCoordinates);
+        }
+        break;
       case 'PlacingPiece':
         if (this.state.pieceToPlace) {
           this.placePiece(this.state.pieceToPlace, this.state.currentPlayer, squareCoordinates);
@@ -310,99 +321,86 @@ class Game extends React.Component <{}, IGame> {
   }
 
   movePiece(squareCoordinates: BoardCoordinates) {
-    const { selectedSquare, movableSquares } = this.state;
+    const { selectedSquare, movableSquares, gameBoard } = this.state;
     const activePiece = selectedSquare ? selectedSquare.piece : null;
     if (activePiece) {
-      if (movableSquares.commandSquares.some(
-          square => coordinatesEqual(square.coordinates, squareCoordinates))
-        ) {
-          if (movableSquares.commandStartSquare) {
-            this.carryOutCommand(squareCoordinates, activePiece);
-          } else {
-            this.selectPieceToCommand(squareCoordinates, activePiece);
-          }
-      } else if (movableSquares.strikeSquares.some(
-        square => coordinatesEqual(square.coordinates, squareCoordinates)
-      )) {
-        this.carryOutStrike(squareCoordinates, activePiece);
+      const nextPlayer = getWaitingPlayer(this.state.players, this.state.currentPlayer);
+      let updatedBoard = this.state.gameBoard;
+      const playerPieceSquares = getCoordinatesFromBoardSquares(getSquaresWithPlayersPieces(gameBoard, nextPlayer));
+      const movementType = getMovementType(movableSquares, squareCoordinates);
+      if (movementType === 'CommandSelect') {
+        this.selectPieceToCommand(squareCoordinates);
       } else {
-        this.carryOutMovement(squareCoordinates, activePiece);
+        switch (movementType) {
+          case 'StandardMove':
+            updatedBoard = this.carryOutMovement(squareCoordinates, activePiece);
+            break;
+          case 'Strike':
+            updatedBoard = this.carryOutStrike(squareCoordinates);
+            break;
+          case 'CommandMove':
+            updatedBoard = this.carryOutCommand(squareCoordinates, activePiece);
+            break;
+          default:
+            console.log(`Invalid move type`);
+        }
+        activePiece.flipPiece();
+        this.setState({
+          ...this.state,
+          selectedSquare: null,
+          gamePhase: 'ChoosingMove',
+          currentPlayer: getWaitingPlayer(this.state.players, this.state.currentPlayer),
+          legalSquares: playerPieceSquares,
+          movableSquares: emptyMovableSquares(),
+          gameBoard: updatedBoard,
+        });
       }
+    } else {
+      console.log(`Error: no active piece on selected square ${boardCoordinatesToString(squareCoordinates)}`);
     }
   }
 
-  selectPieceToCommand(squareCoordinates: BoardCoordinates, activePiece: GamePiece) {
-    const { gameBoard, selectedSquare, currentPlayer } = this.state;
-    const moveSet = activePiece.isFlipped ? activePiece.flippedMoveSet : activePiece.initialMoveSet;
-    const movableSquaresForCommand = emptyMovableSquares();
+  // TODO handle if piece being commanded is Duke
+  selectPieceToCommand(squareCoordinates: BoardCoordinates) {
+    const { gameBoard } = this.state;
+    const movableSquares = this.state.movableSquares;
     const commandStartSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, squareCoordinates));
-    if (selectedSquare) {
-      movableSquaresForCommand.commandSquares = moveSet.getLegalMoveToSquaresForCommands(selectedSquare, gameBoard, currentPlayer);
-    }
     if (commandStartSquare) {
-      movableSquaresForCommand.commandStartSquare = commandStartSquare;
+      movableSquares.commandStartSquare = commandStartSquare;
     }
     this.setState({
       ...this.state,
-      gamePhase: 'MovingPiece',
-      legalSquares: getCoordinatesFromMovableSquares(movableSquaresForCommand),
-      movableSquares: movableSquaresForCommand,
+      gamePhase: 'CarryingOutCommand',
+      legalSquares: getCoordinatesFromMovableCommandSquares(movableSquares),
+      movableSquares,
     });
   }
 
   carryOutCommand(squareCoordinates: BoardCoordinates, activePiece: GamePiece) {
-    const { gameBoard, movableSquares } = this.state;
-    const movingPiece = movableSquares.commandStartSquare!.piece;
-    activePiece.flipPiece();
-    this.setState({
-      ...this.state,
-      selectedSquare: null,
-      gamePhase: 'ChoosingMove',
-      currentPlayer: getWaitingPlayer(this.state.players, this.state.currentPlayer),
-      legalSquares: this.getSquaresWithNextPlayersPieces(),
-      movableSquares: emptyMovableSquares(),
-      gameBoard: gameBoard.map(
-        square => coordinatesEqual(square.coordinates, squareCoordinates)
-          ? { ...square, piece: movingPiece }
-          : isTheSameSquare(square, movableSquares.commandStartSquare)
-            ? { ...square, piece: null }
-            : square
-      ),
-    });
+    const movingPiece = this.state.movableSquares.commandStartSquare!.piece;
+    return this.state.gameBoard.map(
+      square => coordinatesEqual(square.coordinates, squareCoordinates)
+        ? { ...square, piece: movingPiece }
+        : isTheSameSquare(square, this.state.movableSquares.commandStartSquare)
+          ? { ...square, piece: null }
+          : square
+    );
   }
 
-  carryOutStrike(squareCoordinates: BoardCoordinates, activePiece: GamePiece) {
-    activePiece.flipPiece();
-    this.setState({
-      ...this.state,
-      selectedSquare: null,
-      gamePhase: 'ChoosingMove',
-      currentPlayer: getWaitingPlayer(this.state.players, this.state.currentPlayer),
-      legalSquares: this.getSquaresWithNextPlayersPieces(),
-      movableSquares: emptyMovableSquares(),
-      gameBoard: this.state.gameBoard.map(
-        square => coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: null} : square
-      ),
-    });
+  carryOutStrike(squareCoordinates: BoardCoordinates) {
+    return this.state.gameBoard.map(
+      square => coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: null} : square
+    );
   }
 
   carryOutMovement(squareCoordinates: BoardCoordinates, activePiece: GamePiece) {
-    activePiece.flipPiece();
-    this.setState({
-      ...this.state,
-      selectedSquare: null,
-      gamePhase: 'ChoosingMove',
-      currentPlayer: getWaitingPlayer(this.state.players, this.state.currentPlayer),
-      legalSquares: this.getSquaresWithNextPlayersPieces(),
-      movableSquares: emptyMovableSquares(),
-      gameBoard: this.state.gameBoard.map(
-        square => coordinatesEqual(square.coordinates, squareCoordinates)
-          ? { ...square, piece: activePiece}
-          : isTheSameSquare(square, this.state.selectedSquare)
-            ? { ...square, piece: null }
-            : square
-      ),
-    });
+    return this.state.gameBoard.map(
+      square => coordinatesEqual(square.coordinates, squareCoordinates)
+        ? { ...square, piece: activePiece}
+        : isTheSameSquare(square, this.state.selectedSquare)
+          ? { ...square, piece: null }
+          : square
+    );
   }
 
   drawFromBag() {

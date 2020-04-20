@@ -2,7 +2,8 @@ import React from 'react';
 import { Square } from 'Square';
 import './board.css';
 import { Player } from 'Player';
-import { BoardCoordinates, GameBoard, GameStage, GamePhase, BoardSquare } from 'GameBoard';
+import { BoardCoordinates, GameBoard, BoardSquare } from 'GameBoard';
+import { GameStage, GamePhase } from 'GamePhases';
 
 interface IBoardProps {
   gameBoard: GameBoard,

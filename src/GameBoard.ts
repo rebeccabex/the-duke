@@ -21,22 +21,28 @@ export type BoardSquare = {
 }
 
 export type MovableSquares = {
-  movableSquares: Array<BoardSquare>;
+  standardMovableSquares: Array<BoardSquare>;
   strikeSquares: Array<BoardSquare>;
-  commandSquares: Array<BoardSquare>;
+  commandSelectSquares: Array<BoardSquare>;
+  commandTargetSquares: Array<BoardSquare>;
   commandStartSquare: BoardSquare | null;
 }
 
 export const emptyMovableSquares = (): MovableSquares => {
   return {
-    movableSquares: Array<BoardSquare>(),
+    standardMovableSquares: Array<BoardSquare>(),
     strikeSquares: Array<BoardSquare>(),
-    commandSquares: Array<BoardSquare>(),
+    commandSelectSquares: Array<BoardSquare>(),
+    commandTargetSquares: Array<BoardSquare>(),
     commandStartSquare: null,
   };
 }
 
 export type BoardCoordinates = {x: number, y: number};
+
+export const boardCoordinatesToString = (boardCoordinates: BoardCoordinates): string => {
+  return `(${boardCoordinates.x}, ${boardCoordinates.y})`;
+}
 
 export const boardSquareIsEmpty = (boardSquare?: BoardSquare): boolean => {
   return !!boardSquare && boardSquare.piece === null;
@@ -48,6 +54,24 @@ export const boardSquareContainsEnemy = (boardSquare: BoardSquare, currentPlayer
 
 export const boardSquareContainsFriendlyPiece = (boardSquare: BoardSquare, currentPlayer: Player): boolean => {
   return boardSquare.piece !== null && boardSquare.piece.colour === currentPlayer.colour;
+}
+
+export const getAllPiecesOnBoard = (board: GameBoard): Array<GamePiece> => {
+  const pieces = new Array<GamePiece>();
+  board.forEach(square => square.piece !== null ? pieces.push(square.piece) : {});
+  return pieces;
+}
+
+export const getPlayersPiecesOnBoard = (board: GameBoard, player: Player): Array<GamePiece> => {
+  return getAllPiecesOnBoard(board).filter(piece => piece.colour === player.colour);
+}
+
+export const getOccupiedSquares = (board: GameBoard): Array<BoardSquare> => {
+  return board.filter(square => square.piece !== null);
+}
+
+export const getSquaresWithPlayersPieces = (board: GameBoard, player: Player): Array<BoardSquare> => {
+  return board.filter(square => square.piece !== null && square.piece.colour === player.colour);
 }
 
 export const coordinatesEqual = (coordinates1: BoardCoordinates | null, coordinates2: BoardCoordinates | null): boolean => {
@@ -75,12 +99,20 @@ export const applyRangeOfMovesToCoordinates = (currentCoordinates: BoardCoordina
   return rangeOfCoordinates;
 }
 
+export const getCoordinatesFromBoardSquares = (squares: BoardSquare[]): BoardCoordinates[] => {
+  return squares.map(square => square.coordinates);
+}
+
 export const getCoordinatesFromMovableSquares = (movableSquares: MovableSquares): BoardCoordinates[] => {
   return [
-    ...movableSquares.movableSquares.map(square => square.coordinates),
+    ...movableSquares.standardMovableSquares.map(square => square.coordinates),
     ...movableSquares.strikeSquares.map(square => square.coordinates),
-    ...movableSquares.commandSquares.map(square => square.coordinates),
+    ...movableSquares.commandSelectSquares.map(square => square.coordinates),
   ];
+}
+
+export const getCoordinatesFromMovableCommandSquares = (movableSquares: MovableSquares): BoardCoordinates[] => {
+  return [...movableSquares.commandTargetSquares.map(square => square.coordinates)];
 }
 
 export const isStandardMoveBlocked = (currentCoordinates: BoardCoordinates, move: BoardCoordinates, gameBoard: GameBoard): boolean => {
@@ -129,12 +161,15 @@ export const getAvailableMoveSquares = (
   currentPlayer: Player
 ): MovableSquares => {
   const movableSquares = emptyMovableSquares();
-  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForStandardMoves(currentCoordinates, gameBoard, currentPlayer));
-  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForJumps(currentCoordinates, gameBoard, currentPlayer));
-  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForSlides(currentCoordinates, gameBoard, currentPlayer));
-  movableSquares.movableSquares.push(...moveSet.getLegalTargetSquaresForJumpSlides(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForSteps(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForJumps(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForSlides(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForJumpSlides(currentCoordinates, gameBoard, currentPlayer));
   movableSquares.strikeSquares.push(...moveSet.getLegalTargetSquaresForStrikes(currentCoordinates, gameBoard, currentPlayer));
-  movableSquares.commandSquares.push(...moveSet.getLegalPickUpSquaresForCommands(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.commandSelectSquares.push(...moveSet.getLegalPickUpSquaresForCommands(currentCoordinates, gameBoard, currentPlayer));
+  if (movableSquares.commandSelectSquares.length > 0) {
+    movableSquares.commandTargetSquares.push(...moveSet.getLegalMoveToSquaresForCommands(currentCoordinates, gameBoard, currentPlayer));
+  }
 
   return movableSquares;
 }

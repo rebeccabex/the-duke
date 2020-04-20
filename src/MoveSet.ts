@@ -14,7 +14,7 @@ import {
 import { Player } from "Player";
 
 export class MoveSet {
-  moves: Array<BoardCoordinates>;
+  steps: Array<BoardCoordinates>;
   jumps: Array<BoardCoordinates>;
   slides: Array<BoardCoordinates>;
   jumpSlides: Array<BoardCoordinates>;
@@ -22,14 +22,14 @@ export class MoveSet {
   commands: Array<BoardCoordinates>;
 
   constructor(
-    move?: Array<BoardCoordinates>,
+    step?: Array<BoardCoordinates>,
     jump?: Array<BoardCoordinates>,
     slide?: Array<BoardCoordinates>,
     jumpSlide?: Array<BoardCoordinates>,
     strike?: Array<BoardCoordinates>,
     command?: Array<BoardCoordinates>,
   ) {
-    this.moves = move ? move : [];
+    this.steps = step ? step : [];
     this.jumps = jump ? jump : [];
     this.slides = slide ? slide : [];
     this.jumpSlides = jumpSlide ? jumpSlide : [];
@@ -39,7 +39,7 @@ export class MoveSet {
 
   // TODO: Add ability to handle more human-readable descriptions 'Slide: Left'
   addMoves(landingSquares: Array<BoardCoordinates>) {
-    this.moves.push(...landingSquares);
+    this.steps.push(...landingSquares);
   }
 
   addJumps(landingSquares: Array<BoardCoordinates>) {
@@ -62,9 +62,9 @@ export class MoveSet {
     this.commands.push(...targetSquares);
   }
 
-  getLegalTargetSquaresForStandardMoves(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
+  getLegalTargetSquaresForSteps(currentSquare: BoardSquare, gameBoard: GameBoard, currentPlayer: Player) {
     const legalSquares = new Array<BoardSquare>();
-    [this.moves].forEach(moveType =>
+    [this.steps].forEach(moveType =>
       moveType.forEach(move => {
         let newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(move, -1) : move;
         const newCoordinates = applyMoveToCoordinates(currentSquare.coordinates, newMove);
