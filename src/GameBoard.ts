@@ -40,6 +40,8 @@ export const emptyMovableSquares = (): MovableSquares => {
 
 export type BoardCoordinates = {x: number, y: number};
 
+export type RelativeCoordinates = BoardCoordinates;
+
 export const boardCoordinatesToString = (boardCoordinates: BoardCoordinates): string => {
   return `(${boardCoordinates.x}, ${boardCoordinates.y})`;
 }
@@ -138,7 +140,7 @@ export const getOrthogonallyAdjacentSquares = (currentSquare: BoardCoordinates):
   for (var i = -1; i < 2; i++){
     for (var j = -1; j < 2; j++){
       const coordinates = {x: currentSquare.x + i, y: currentSquare.y + j};
-      if (Math.abs(i) !== Math.abs(j) && areValidCoordinates(coordinates)) {
+      if (Math.abs(i) !== Math.abs(j) && areCoordinatesOnBoard(coordinates)) {
         neighbourhood.push(coordinates);
       }
     }
@@ -146,29 +148,35 @@ export const getOrthogonallyAdjacentSquares = (currentSquare: BoardCoordinates):
   return neighbourhood;
 }
 
-export const areValidCoordinates = (coordinates: BoardCoordinates): boolean => {
+export const areCoordinatesOnBoard = (coordinates: BoardCoordinates): boolean => {
   return coordinates.x >= 0 && coordinates.x < 6 && coordinates.y >= 0 && coordinates.y < 6;
 }
 
+export const areCoordinatesValidForMove = (coordinates: BoardCoordinates, blockedCoordinates?: BoardCoordinates[]): boolean => {
+  return areCoordinatesOnBoard(coordinates) && !(blockedCoordinates && coordinatesInSelection(blockedCoordinates, coordinates));
+}
+
 export const returnValidCoordinatesFromRange = (range: BoardCoordinates[]): BoardCoordinates[] => {
-  return range.filter(coordinates => areValidCoordinates(coordinates));
+  return range.filter(coordinates => areCoordinatesOnBoard(coordinates));
 }
 
 export const getAvailableMoveSquares = (
   moveSet: MoveSet,
-  currentCoordinates: BoardSquare,
+  currentCoordinates: BoardCoordinates,
   gameBoard: GameBoard,
-  currentPlayer: Player
+  currentPlayer: Player,
+  playerIsWaiting: boolean = false,
+  blockedCoordinates?: Array<BoardCoordinates>,
 ): MovableSquares => {
   const movableSquares = emptyMovableSquares();
-  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForSteps(currentCoordinates, gameBoard, currentPlayer));
-  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForJumps(currentCoordinates, gameBoard, currentPlayer));
-  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForSlides(currentCoordinates, gameBoard, currentPlayer));
-  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForJumpSlides(currentCoordinates, gameBoard, currentPlayer));
-  movableSquares.strikeSquares.push(...moveSet.getLegalTargetSquaresForStrikes(currentCoordinates, gameBoard, currentPlayer));
+  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForSteps(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting, blockedCoordinates));
+  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForJumps(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting, blockedCoordinates));
+  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForSlides(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting, blockedCoordinates));
+  movableSquares.standardMovableSquares.push(...moveSet.getLegalTargetSquaresForJumpSlides(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting, blockedCoordinates));
+  movableSquares.strikeSquares.push(...moveSet.getLegalTargetSquaresForStrikes(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting));
   movableSquares.commandSelectSquares.push(...moveSet.getLegalPickUpSquaresForCommands(currentCoordinates, gameBoard, currentPlayer));
   if (movableSquares.commandSelectSquares.length > 0) {
-    movableSquares.commandTargetSquares.push(...moveSet.getLegalMoveToSquaresForCommands(currentCoordinates, gameBoard, currentPlayer));
+    movableSquares.commandTargetSquares.push(...moveSet.getLegalMoveToSquaresForCommands(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting));
   }
 
   return movableSquares;

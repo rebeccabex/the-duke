@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import { Bag } from './Bag';
 import { Board } from './Board';
-import { GameStage, GamePhase, getMovementType } from 'GamePhases'
+import { GameStage, GamePhase, getMovementType, MovementType } from 'GamePhases'
 import {
   BoardCoordinates,
   GameBoard,
@@ -19,7 +19,7 @@ import {
   boardCoordinatesToString,
   getSquaresWithPlayersPieces,
   getCoordinatesFromMovableCommandSquares,
-  getCoordinatesFromBoardSquares
+  getCoordinatesFromBoardSquares,
 } from 'GameBoard';
 import {
   Player,
@@ -186,7 +186,7 @@ class Game extends React.Component <{}, IGame> {
       const selectedPiece = clickedSquare.piece;
       if (!!selectedPiece) {
         const currentMoveSet = selectedPiece.isFlipped ? selectedPiece.flippedMoveSet: selectedPiece.initialMoveSet;
-        return getAvailableMoveSquares(currentMoveSet, clickedSquare, gameBoard, currentPlayer);
+        return getAvailableMoveSquares(currentMoveSet, clickedSquare.coordinates, gameBoard, currentPlayer);
       }
     }
     console.log('No piece selected');
@@ -237,14 +237,14 @@ class Game extends React.Component <{}, IGame> {
         if (coordinatesEqual(squareCoordinates, this.state.selectedSquare!.coordinates)) {
           this.unselectPiece();
         } else if (coordinatesInSelection(getCoordinatesFromMovableSquares(this.state.movableSquares), squareCoordinates)) { 
-          this.movePiece(squareCoordinates);
+          this.takeMove(squareCoordinates);
         }
         break;
       case 'CarryingOutCommand':
         if (coordinatesEqual(squareCoordinates, this.state.selectedSquare!.coordinates)) {
           this.unselectPiece();
         } else if (coordinatesInSelection(getCoordinatesFromMovableCommandSquares(this.state.movableSquares), squareCoordinates)) { 
-          this.movePiece(squareCoordinates);
+          this.takeMove(squareCoordinates);
         }
         break;
       case 'PlacingPiece':
@@ -288,6 +288,7 @@ class Game extends React.Component <{}, IGame> {
     const nextGameStage = this.getNextGameStage(player);
 
     const legalPlacingSquares = this.getLegalSquaresForNextStep(nextGamePhase, getWaitingPlayer(this.state.players, this.state.currentPlayer));
+    gamePiece.updatePosition(squareCoordinates);
 
     this.setState({
       ...this.state,
@@ -320,44 +321,49 @@ class Game extends React.Component <{}, IGame> {
     }
   }
 
-  movePiece(squareCoordinates: BoardCoordinates) {
-    const { selectedSquare, movableSquares, gameBoard } = this.state;
+  takeMove(squareCoordinates: BoardCoordinates) {
+    const { selectedSquare, movableSquares } = this.state;
     const activePiece = selectedSquare ? selectedSquare.piece : null;
-    if (activePiece) {
-      const nextPlayer = getWaitingPlayer(this.state.players, this.state.currentPlayer);
-      let updatedBoard = this.state.gameBoard;
-      const playerPieceSquares = getCoordinatesFromBoardSquares(getSquaresWithPlayersPieces(gameBoard, nextPlayer));
-      const movementType = getMovementType(movableSquares, squareCoordinates);
+    const movementType = getMovementType(movableSquares, squareCoordinates);
+    if (activePiece && movementType) {
       if (movementType === 'CommandSelect') {
         this.selectPieceToCommand(squareCoordinates);
       } else {
-        switch (movementType) {
-          case 'StandardMove':
-            updatedBoard = this.carryOutMovement(squareCoordinates, activePiece);
-            break;
-          case 'Strike':
-            updatedBoard = this.carryOutStrike(squareCoordinates);
-            break;
-          case 'CommandMove':
-            updatedBoard = this.carryOutCommand(squareCoordinates, activePiece);
-            break;
-          default:
-            console.log(`Invalid move type`);
-        }
-        activePiece.flipPiece();
-        this.setState({
-          ...this.state,
-          selectedSquare: null,
-          gamePhase: 'ChoosingMove',
-          currentPlayer: getWaitingPlayer(this.state.players, this.state.currentPlayer),
-          legalSquares: playerPieceSquares,
-          movableSquares: emptyMovableSquares(),
-          gameBoard: updatedBoard,
-        });
+        this.movePiece(squareCoordinates, movementType, activePiece);
       }
     } else {
       console.log(`Error: no active piece on selected square ${boardCoordinatesToString(squareCoordinates)}`);
     }
+  }
+
+  movePiece(squareCoordinates: BoardCoordinates, movementType: MovementType, activePiece: GamePiece) {
+    const { gameBoard } = this.state;
+    const nextPlayer = getWaitingPlayer(this.state.players, this.state.currentPlayer);
+    let updatedBoard = this.state.gameBoard;
+    activePiece.flipPiece();
+    const playerPieceSquares = getCoordinatesFromBoardSquares(getSquaresWithPlayersPieces(gameBoard, nextPlayer));
+    switch (movementType) {
+      case 'StandardMove':
+        updatedBoard = this.carryOutMovement(squareCoordinates, activePiece);
+        break;
+      case 'Strike':
+        updatedBoard = this.carryOutStrike(squareCoordinates);
+        break;
+      case 'CommandMove':
+        updatedBoard = this.carryOutCommand(squareCoordinates);
+        break;
+      default:
+        console.log(`Invalid move type`);
+    }
+    this.setState({
+      ...this.state,
+      selectedSquare: null,
+      gamePhase: 'ChoosingMove',
+      currentPlayer: getWaitingPlayer(this.state.players, this.state.currentPlayer),
+      legalSquares: playerPieceSquares,
+      movableSquares: emptyMovableSquares(),
+      gameBoard: updatedBoard,
+    });
   }
 
   // TODO handle if piece being commanded is Duke
@@ -376,24 +382,34 @@ class Game extends React.Component <{}, IGame> {
     });
   }
 
-  carryOutCommand(squareCoordinates: BoardCoordinates, activePiece: GamePiece) {
+  // TODO add pieceTaken to targetted piece if required
+  carryOutCommand(squareCoordinates: BoardCoordinates) {
     const movingPiece = this.state.movableSquares.commandStartSquare!.piece;
-    return this.state.gameBoard.map(
-      square => coordinatesEqual(square.coordinates, squareCoordinates)
-        ? { ...square, piece: movingPiece }
-        : isTheSameSquare(square, this.state.movableSquares.commandStartSquare)
-          ? { ...square, piece: null }
-          : square
-    );
+    if (movingPiece) {
+      movingPiece.updatePosition(squareCoordinates);
+      return this.state.gameBoard.map(
+        square => coordinatesEqual(square.coordinates, squareCoordinates)
+          ? { ...square, piece: movingPiece }
+          : isTheSameSquare(square, this.state.movableSquares.commandStartSquare)
+            ? { ...square, piece: null }
+            : square
+      );
+    } else {
+      console.log('No piece selected to move by command');
+      return this.state.gameBoard;
+    }
   }
 
+  // TODO add pieceTaken to targetted piece if required
   carryOutStrike(squareCoordinates: BoardCoordinates) {
     return this.state.gameBoard.map(
       square => coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: null} : square
     );
   }
 
+  // TODO add pieceTaken to targetted piece if required
   carryOutMovement(squareCoordinates: BoardCoordinates, activePiece: GamePiece) {
+    activePiece.updatePosition(squareCoordinates);
     return this.state.gameBoard.map(
       square => coordinatesEqual(square.coordinates, squareCoordinates)
         ? { ...square, piece: activePiece}

@@ -23,7 +23,7 @@ export const createNewPiece = (pieceName: string, colour: string): GamePiece | n
 
 export class Duke extends GamePiece {
   constructor(colour: string) {
-    super('Duke', colour);
+    super('Duke', colour, true);
     this.initialMoveSet.addSlides([{x: 1, y: 0}, {x: -1, y: 0}]);
     
     this.flippedMoveSet.addSlides([{x: 0, y: -1}, {x: 0, y: 1}]);
