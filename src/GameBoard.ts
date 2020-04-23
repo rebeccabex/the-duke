@@ -117,6 +117,14 @@ export const getCoordinatesFromMovableCommandSquares = (movableSquares: MovableS
   return [...movableSquares.commandTargetSquares.map(square => square.coordinates)];
 }
 
+export const getTargettedCoordinatesFromMovableSquares = (movableSquares: MovableSquares): BoardCoordinates[] => {
+  return [
+    ...movableSquares.standardMovableSquares.map(square => square.coordinates),
+    ...movableSquares.strikeSquares.map(square => square.coordinates),
+    ...movableSquares.commandTargetSquares.map(square => square.coordinates),
+  ];
+}
+
 export const isStandardMoveBlocked = (currentCoordinates: BoardCoordinates, move: BoardCoordinates, gameBoard: GameBoard): boolean => {
   const loopBound = Math.max(Math.abs(move.x), Math.abs(move.y));
   for (let i = 1; i < loopBound; i++) {

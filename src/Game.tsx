@@ -20,6 +20,8 @@ import {
   getSquaresWithPlayersPieces,
   getCoordinatesFromMovableCommandSquares,
   getCoordinatesFromBoardSquares,
+  getAllPiecesOnBoard,
+  getTargettedCoordinatesFromMovableSquares,
 } from 'GameBoard';
 import {
   Player,
@@ -42,6 +44,7 @@ interface IGame {
   legalSquares: Array<BoardCoordinates>,
   movableSquares: MovableSquares,
   pieceToPlace: GamePiece | null,
+  currentPlayerIsOnGuard: boolean,
 }
 
 class Game extends React.Component <{}, IGame> {
@@ -62,6 +65,7 @@ class Game extends React.Component <{}, IGame> {
       startPlayer: blackPlayer,
       movableSquares: emptyMovableSquares(),
       pieceToPlace: null,
+      currentPlayerIsOnGuard: false,
     }
 
     this.createBags = this.createBags.bind(this);
@@ -111,6 +115,7 @@ class Game extends React.Component <{}, IGame> {
   }
 
   setGameControls() {
+    const { players, currentPlayer } = this.state;
     var gameInstruction = '';
     switch(this.state.gameStage) {
       case 'Start':
@@ -118,28 +123,31 @@ class Game extends React.Component <{}, IGame> {
       case 'Setup':
         switch(this.state.gamePhase) {
           case 'PlacingDuke':
-            gameInstruction = `${this.state.currentPlayer.colour}, choose where to place your Duke`;
+            gameInstruction = `${currentPlayer.colour}, choose where to place your Duke`;
             break;
           case 'PlacingFootsoldier1':
           case 'PlacingFootsoldier2':
-            gameInstruction = `${this.state.currentPlayer.colour}, choose where to place your Footsoldier`;
+            gameInstruction = `${currentPlayer.colour}, choose where to place your Footsoldier`;
         }
         break;
       case 'Playing':
+        if (this.state.currentPlayerIsOnGuard) {
+          gameInstruction = 'GUARD!'
+        }
         switch(this.state.gamePhase) {
           case 'ChoosingMove':
-            gameInstruction = `${this.state.currentPlayer.colour}, make a move or draw from your bag`;
+            gameInstruction += ` ${currentPlayer.colour}, make a move or draw from your bag`;
             break;
           case 'MovingPiece':
-            gameInstruction = `${this.state.currentPlayer.colour}, make a move`;
+            gameInstruction += ` ${currentPlayer.colour}, make a move`;
             break;
           case 'PlacingPiece': 
-            gameInstruction = `${this.state.currentPlayer.colour}, choose where to place your piece`;
+            gameInstruction += ` ${currentPlayer.colour}, choose where to place your piece`;
             break;
         }
         break;
       case 'Finished':
-        gameInstruction = `Congratulations, ${this.state.currentPlayer.colour}`;
+        gameInstruction = `Congratulations, ${getWaitingPlayer(players, currentPlayer).colour}`;
     }
     return <div className='game-instruction'>{gameInstruction}</div>;
   }
@@ -355,14 +363,25 @@ class Game extends React.Component <{}, IGame> {
       default:
         console.log(`Invalid move type`);
     }
+    let newGamePhase = 'ChoosingMove' as GamePhase;
+    const updatedBoardWithPieceMoves = this.updatePieceMoves(updatedBoard);
+    const playerIsOnGuard = this.isPlayerOnGuard(updatedBoardWithPieceMoves);
+    if (playerIsOnGuard) {
+      const opponentHasWon = !this.canPlayerEscapeGuard(updatedBoardWithPieceMoves);
+      if (opponentHasWon) {
+        newGamePhase = null;
+      }
+    }
     this.setState({
       ...this.state,
       selectedSquare: null,
-      gamePhase: 'ChoosingMove',
+      gamePhase: newGamePhase,
+      gameStage: newGamePhase ? this.state.gameStage : 'Finished',
       currentPlayer: getWaitingPlayer(this.state.players, this.state.currentPlayer),
       legalSquares: playerPieceSquares,
       movableSquares: emptyMovableSquares(),
-      gameBoard: updatedBoard,
+      gameBoard: updatedBoardWithPieceMoves,
+      currentPlayerIsOnGuard: playerIsOnGuard,
     });
   }
 
@@ -436,6 +455,96 @@ class Game extends React.Component <{}, IGame> {
       ),
       pieceToPlace: drawnPiece,
     })
+  }
+
+  // TODO refactor
+  updatePieceMoves(gameBoard: GameBoard) {
+    const allPieces = getAllPiecesOnBoard(gameBoard);
+    const playerToMove = getWaitingPlayer(this.state.players, this.state.currentPlayer);
+    const opponent = this.state.currentPlayer;
+
+    const opponentsNonLeaderPieces = allPieces.filter(piece => piece.colour === opponent.colour && !piece.isLeader);
+    opponentsNonLeaderPieces.forEach(piece => piece.updatePotentialMoves(gameBoard, opponent, true));
+
+    // TODO handle pinned pieces
+    const playerToMovesNonLeaderPieces = allPieces.filter(piece => piece.colour === playerToMove.colour && !piece.isLeader);
+    playerToMovesNonLeaderPieces.forEach(piece => piece.updatePotentialMoves(gameBoard, playerToMove));
+
+    const opponentsLeader = allPieces.find(piece => piece.colour === opponent.colour && piece.isLeader);
+    if (!opponentsLeader) {
+      console.log(`Player ${opponent.colour} has no leader`);
+      return gameBoard;
+    }
+    opponentsLeader.updatePotentialMoves(gameBoard, opponent, true);
+
+    const coordinatesAttackedByOpponent = [
+      ...opponentsNonLeaderPieces.flatMap(piece => getTargettedCoordinatesFromMovableSquares(piece.potentialMoves)),
+      ...getTargettedCoordinatesFromMovableSquares(opponentsLeader.potentialMoves),
+    ].filter((square, index, array) => index === array.indexOf(square));
+
+    const playerToMovesLeader = allPieces.find(piece => piece.colour === playerToMove.colour && piece.isLeader);
+    if (!playerToMovesLeader) {
+      console.log(`Player ${playerToMove.colour} has no leader`);
+      return gameBoard;
+    }
+    playerToMovesLeader.updatePotentialMoves(gameBoard, playerToMove, false, coordinatesAttackedByOpponent);
+
+    return gameBoard;
+  }
+
+  isPlayerOnGuard(gameBoard: GameBoard) {
+    const allPieces = getAllPiecesOnBoard(gameBoard);
+    const playerToMove = getWaitingPlayer(this.state.players, this.state.currentPlayer);
+    const opponentsPieces = allPieces.filter(piece => piece.colour === this.state.currentPlayer.colour);
+
+    const playerToMovesLeader = allPieces.find(piece => piece.colour === playerToMove.colour && piece.isLeader);
+    if (!playerToMovesLeader) {
+      console.log(`Player ${playerToMove.colour} has no leader`);
+      return false;
+    }
+    const coordinatesAttackedByOpponent = [
+      ...opponentsPieces.flatMap(piece => getTargettedCoordinatesFromMovableSquares(piece.potentialMoves)),
+    ].filter((square, index, array) => index === array.indexOf(square));
+
+    return coordinatesInSelection(coordinatesAttackedByOpponent, playerToMovesLeader.position!);    
+  }
+
+  canPlayerEscapeGuard(gameBoard: GameBoard) {
+    const allPieces = getAllPiecesOnBoard(gameBoard);
+    const playerToMove = getWaitingPlayer(this.state.players, this.state.currentPlayer);
+    const opponentsPieces = allPieces.filter(piece => piece.colour === this.state.currentPlayer.colour);
+    const playerToMovesNonLeaderPieces = allPieces.filter(piece => piece.colour === playerToMove.colour && !piece.isLeader);
+    
+    const playerToMovesLeader = allPieces.find(piece => piece.colour === playerToMove.colour && piece.isLeader);
+    if (!playerToMovesLeader) {
+      console.log(`Player ${playerToMove.colour} has no leader`);
+      return false;
+    }
+
+    // can move Duke to safe square
+    if (getCoordinatesFromMovableSquares(playerToMovesLeader.potentialMoves).length > 0) {
+      return true;
+    }
+
+    // can take attacking piece (only if 1 piece attacking)
+    // TODO handle Command - taking Command piece may already be covered, but need to handle taking piece if it's only one that can be commanded
+    const piecesAttackingLeader = opponentsPieces.filter(
+      piece => coordinatesInSelection(
+        getTargettedCoordinatesFromMovableSquares(piece.potentialMoves), playerToMovesLeader.position!
+      )
+    );
+
+    if (piecesAttackingLeader.length === 1 && playerToMovesNonLeaderPieces.some(
+      piece => coordinatesInSelection(
+        getTargettedCoordinatesFromMovableSquares(piece.potentialMoves), piecesAttackingLeader[0].position!
+      )
+    )) {
+      return true;
+    }
+
+    // TODO can put piece in way of attack
+
+    return false;
   }
 
   render() {

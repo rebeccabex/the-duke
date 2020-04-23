@@ -44,7 +44,7 @@ export class GamePiece {
   ) {
     if (this.position) {
       const currentMoveSet = this.isFlipped ? this.flippedMoveSet: this.initialMoveSet;
-      return getAvailableMoveSquares(currentMoveSet, this.position, gameBoard, player, playerIsWaiting, invalidCoordinates);
+      this.potentialMoves = getAvailableMoveSquares(currentMoveSet, this.position, gameBoard, player, playerIsWaiting, invalidCoordinates);
     } else {
       console.log(`Cannot update potential moves of ${this.colour}'s ${this.name} as it does have a valid position.`)
     }
