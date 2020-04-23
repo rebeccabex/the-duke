@@ -11,7 +11,8 @@ import {
   isStandardMoveBlocked,
   boardSquareContainsFriendlyPiece,
   BoardCoordinates,
-  areCoordinatesValidForMove
+  areCoordinatesValidForMove,
+  coordinatesInSelection
 } from "GameBoard";
 import { Player } from "Player";
 
@@ -135,18 +136,20 @@ export class MoveSet {
         let newMove = multiplyMoveVectorByScalar(move, distance);
         newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(newMove, -1) : newMove;
         const newCoordinates = applyMoveToCoordinates(currentCoordinates, newMove);
-        if (areCoordinatesValidForMove(newCoordinates, blockedCoordinates)) {
+        if (areCoordinatesOnBoard(newCoordinates)) {
           const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));
           if (!!newBoardSquare) {
-              if (boardSquareIsEmpty(newBoardSquare)) {
-                legalSquares.push(newBoardSquare);
-                distance++;
-              } else if (playerIsWaiting || boardSquareContainsEnemy(newBoardSquare, currentPlayer)) {
-                legalSquares.push(newBoardSquare);
-                tryNextSquare = false;
-              } else {
-                tryNextSquare = false;
-              }
+            if (blockedCoordinates && coordinatesInSelection(blockedCoordinates, newCoordinates)) {
+              distance++;
+            } else if (boardSquareIsEmpty(newBoardSquare)) {
+              legalSquares.push(newBoardSquare);
+              distance++;
+            } else if (playerIsWaiting || boardSquareContainsEnemy(newBoardSquare, currentPlayer)) {
+              legalSquares.push(newBoardSquare);
+              tryNextSquare = false;
+            } else {
+              tryNextSquare = false;
+            }
           }
         } else {
           tryNextSquare = false;
@@ -171,18 +174,20 @@ export class MoveSet {
         let newMove = multiplyMoveVectorByScalar(move, distance);
         newMove = currentPlayer.directionReversed ? multiplyMoveVectorByScalar(newMove, -1) : newMove;
         const newCoordinates = applyMoveToCoordinates(currentCoordinates, newMove);
-        if (areCoordinatesValidForMove(newCoordinates, blockedCoordinates)) {
+        if (areCoordinatesOnBoard(newCoordinates)) {
           const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));
           if (!!newBoardSquare) {
-              if (boardSquareIsEmpty(newBoardSquare)) {
-                legalSquares.push(newBoardSquare);
-                distance++;
-              } else if (playerIsWaiting || boardSquareContainsEnemy(newBoardSquare, currentPlayer)) {
-                legalSquares.push(newBoardSquare);
-                tryNextSquare = false;
-              } else {
-                tryNextSquare = false;
-              }
+            if (blockedCoordinates && coordinatesInSelection(blockedCoordinates, newCoordinates)) {
+              distance++;
+            } else if (boardSquareIsEmpty(newBoardSquare)) {
+              legalSquares.push(newBoardSquare);
+              distance++;
+            } else if (playerIsWaiting || boardSquareContainsEnemy(newBoardSquare, currentPlayer)) {
+              legalSquares.push(newBoardSquare);
+              tryNextSquare = false;
+            } else {
+              tryNextSquare = false;
+            }
           }
         } else {
           tryNextSquare = false;

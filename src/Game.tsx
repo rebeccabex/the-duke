@@ -268,7 +268,7 @@ class Game extends React.Component <{}, IGame> {
   selectPiece(squareCoordinates: BoardCoordinates) {
     const clickedSquare = this.state.gameBoard.find(square => coordinatesEqual(square.coordinates, squareCoordinates))
     if (clickedSquare && clickedSquare.piece && clickedSquare.piece.colour === this.state.currentPlayer.colour) {
-      const movableSquares = this.getLegalPieceMovingSquares(clickedSquare);
+      const movableSquares = clickedSquare.piece.potentialMoves;
       this.setState({
         ...this.state,
         selectedSquare: clickedSquare === undefined ? null : clickedSquare,
@@ -298,10 +298,16 @@ class Game extends React.Component <{}, IGame> {
     const legalPlacingSquares = this.getLegalSquaresForNextStep(nextGamePhase, getWaitingPlayer(this.state.players, this.state.currentPlayer));
     gamePiece.updatePosition(squareCoordinates);
 
+    let updatedBoard = this.state.gameBoard.map((square) =>
+    coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: gamePiece} : square);
+
+    if (nextGamePhase === 'ChoosingMove') {
+      updatedBoard = this.updatePieceMoves(updatedBoard);
+    }
+
     this.setState({
       ...this.state,
-      gameBoard: this.state.gameBoard.map((square) =>
-        coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: gamePiece} : square),
+      gameBoard: updatedBoard,
       currentPlayer: getWaitingPlayer(this.state.players, this.state.currentPlayer),
       gamePhase: nextGamePhase,
       gameStage: nextGameStage,
@@ -543,6 +549,11 @@ class Game extends React.Component <{}, IGame> {
     }
 
     // TODO can put piece in way of attack
+    // NOTE it is possible to block attack when 2 pieces are attacking if they are in same line - one with JS, then one with slide, 1+ free space (to block), then Duke
+    // Jumps can't be blocked
+    // Steps and Slides can be blocked as long as piece isn't next to Duke
+    // Jump Slide - jump can't be blocked but slide can be, as long as 1+ square between jump landing and Duke
+
 
     return false;
   }

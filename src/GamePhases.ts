@@ -1,4 +1,4 @@
-import { BoardCoordinates, MovableSquares, coordinatesEqual, boardCoordinatesToString } from "GameBoard";
+import { BoardCoordinates, MovableSquares, coordinatesEqual, boardCoordinatesToString, getCoordinatesFromStandardMovableSquares } from "GameBoard";
 
 export type GameStage = 'Start' | 'Setup' | 'Playing' | 'Finished';
 
@@ -11,7 +11,7 @@ export type PlayingPhase = 'ChoosingMove' | 'MovingPiece' | 'PlacingPiece' | 'Ca
 export type MovementType = 'StandardMove' | 'Strike' | 'CommandSelect' | 'CommandMove';
 
 export const getMovementType = (movableSquares: MovableSquares, squareCoordinates: BoardCoordinates): MovementType | null => {
-  if (movableSquares.standardMovableSquares.some(square => coordinatesEqual(square.coordinates, squareCoordinates))) {
+  if (getCoordinatesFromStandardMovableSquares(movableSquares.standardMovableSquares).some(coordinates => coordinatesEqual(coordinates, squareCoordinates))) {
     return 'StandardMove';
   }
   if (movableSquares.strikeSquares.some(square => coordinatesEqual(square.coordinates, squareCoordinates))) {
