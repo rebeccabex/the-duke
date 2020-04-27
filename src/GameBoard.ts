@@ -1,6 +1,7 @@
 import { GamePiece } from "GamePiece";
 import { Player } from "Player";
 import { MoveSet } from "MoveSet";
+import { AllMovementTypes } from "GamePhases";
 
 export type GameBoard = Array<BoardSquare>;
 
@@ -159,8 +160,12 @@ export const isStandardMoveBlocked = (currentCoordinates: BoardCoordinates, move
   return false;
 }
 
-export const coordinatesInSelection = (selection: BoardCoordinates[], coordinates: BoardCoordinates): boolean => {
+export const coordinatesAreInSelection = (selection: BoardCoordinates[], coordinates: BoardCoordinates): boolean => {
   return selection.some(c => coordinatesEqual(c, coordinates));
+}
+
+export const coordinatesAreInBoardSquareSelection = (selection: BoardSquare[], coordinates: BoardCoordinates): boolean => {
+  return selection.some(square => coordinatesEqual(square.coordinates, coordinates));
 }
 
 export const getOrthogonallyAdjacentSquares = (currentSquare: BoardCoordinates): BoardCoordinates[] => {
@@ -177,12 +182,71 @@ export const getOrthogonallyAdjacentSquares = (currentSquare: BoardCoordinates):
   return neighbourhood;
 }
 
+export const pairOfCoordinatesAreUpwardsDiagonal = (firstCoordinates: BoardCoordinates, secondCoordinates: BoardCoordinates): boolean => {
+  return firstCoordinates.x + firstCoordinates.y === secondCoordinates.x + secondCoordinates.y;
+}
+
+export const pairOfCoordinatesAreDownwardsDiagonal = (firstCoordinates: BoardCoordinates, secondCoordinates: BoardCoordinates): boolean => {
+  return firstCoordinates.x - firstCoordinates.y === secondCoordinates.x - secondCoordinates.y;
+}
+
+export const pairOfCoordinatesAreDiagonal = (firstCoordinates: BoardCoordinates, secondCoordinates: BoardCoordinates): boolean => {
+  return pairOfCoordinatesAreUpwardsDiagonal(firstCoordinates, secondCoordinates)
+    || pairOfCoordinatesAreDownwardsDiagonal(firstCoordinates, secondCoordinates);
+}
+
+export const getLeftmostOfCoordinates = (coordinateSelection: BoardCoordinates[]): BoardCoordinates => {
+  return coordinateSelection.sort((a, b) => a.x - b.x)[0];
+}
+
+export const calculateStraightLineDistanceBetweenCoordinates = (firstCoordinates: BoardCoordinates, secondCoordinates: BoardCoordinates): number => {
+  if (firstCoordinates.x === secondCoordinates.x) {
+    return Math.abs(firstCoordinates.y - secondCoordinates.y);
+  } else if (firstCoordinates.y === secondCoordinates.y) {
+    return Math.abs(firstCoordinates.x - secondCoordinates.x);
+  } else if (pairOfCoordinatesAreDiagonal(firstCoordinates, secondCoordinates)) {
+    return Math.abs(firstCoordinates.x - secondCoordinates.x);
+  } else {
+    return -1;
+  }
+}
+
+export const getAllCoordinatesBetweenPairOfCoordinates = (
+  firstCoordinates: BoardCoordinates,
+  secondCoordinates: BoardCoordinates
+): BoardCoordinates[] => {
+  const coordinatesToReturn = new Array<BoardCoordinates>();
+  const distance = calculateStraightLineDistanceBetweenCoordinates(firstCoordinates, secondCoordinates);
+  if (firstCoordinates.x === secondCoordinates.x) {
+    const startY = Math.min(firstCoordinates.y, secondCoordinates.y);
+    for (let i = 1; i < distance; i++) {
+      coordinatesToReturn.push({ x: firstCoordinates.x, y: startY + distance });
+    }
+  } else if (firstCoordinates.y === secondCoordinates.y) {
+    const startX = Math.min(firstCoordinates.x, secondCoordinates.x);
+    for (let i = 1; i < distance; i++) {
+      coordinatesToReturn.push({ x: startX + distance, y: firstCoordinates.y });
+    }
+  } else if (pairOfCoordinatesAreUpwardsDiagonal(firstCoordinates, secondCoordinates)) {
+    const startCoordinates = getLeftmostOfCoordinates([firstCoordinates, secondCoordinates]);
+    for (let i = 1; i < distance; i++) {
+      coordinatesToReturn.push({ x: startCoordinates.x + distance, y: startCoordinates.y - distance });
+    }
+  } else if (pairOfCoordinatesAreUpwardsDiagonal(firstCoordinates, secondCoordinates)) {
+    const startCoordinates = getLeftmostOfCoordinates([firstCoordinates, secondCoordinates]);
+    for (let i = 1; i < distance; i++) {
+      coordinatesToReturn.push({ x: startCoordinates.x + distance, y: startCoordinates.y + distance });
+    }
+  }
+  return coordinatesToReturn
+}
+
 export const areCoordinatesOnBoard = (coordinates: BoardCoordinates): boolean => {
   return coordinates.x >= 0 && coordinates.x < 6 && coordinates.y >= 0 && coordinates.y < 6;
 }
 
 export const areCoordinatesValidForMove = (coordinates: BoardCoordinates, blockedCoordinates?: BoardCoordinates[]): boolean => {
-  return areCoordinatesOnBoard(coordinates) && !(blockedCoordinates && coordinatesInSelection(blockedCoordinates, coordinates));
+  return areCoordinatesOnBoard(coordinates) && !(blockedCoordinates && coordinatesAreInSelection(blockedCoordinates, coordinates));
 }
 
 export const returnValidCoordinatesFromRange = (range: BoardCoordinates[]): BoardCoordinates[] => {
@@ -221,6 +285,30 @@ export const getAvailableMoveSquares = (
       ...moveSet.getLegalMoveToSquaresForCommands(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting)
     );
   }
-
   return movableSquares;
+}
+
+export const getMoveTypeAttackingCoordinates = (coordinates: BoardCoordinates, movableSquares: MovableSquares): AllMovementTypes => {
+  if (coordinatesAreInBoardSquareSelection(movableSquares.strikeSquares, coordinates)) {
+    return 'Strike';
+  }
+  if (coordinatesAreInBoardSquareSelection(movableSquares.commandSelectSquares, coordinates)) {
+    return 'CommandSelect';
+  }
+  if (coordinatesAreInBoardSquareSelection(movableSquares.commandTargetSquares, coordinates)) {
+    return 'CommandMove';
+  }
+  if (coordinatesAreInBoardSquareSelection(movableSquares.standardMovableSquares.stepMovableSquares, coordinates)) {
+    return 'Step';
+  }
+  if (coordinatesAreInBoardSquareSelection(movableSquares.standardMovableSquares.jumpMovableSquares, coordinates)) {
+    return 'Jump';
+  }
+  if (coordinatesAreInBoardSquareSelection(movableSquares.standardMovableSquares.slideMovableSquares, coordinates)) {
+    return 'Slide';
+  }
+  if (coordinatesAreInBoardSquareSelection(movableSquares.standardMovableSquares.jumpSlideMovableSquares, coordinates)) {
+    return 'JumpSlide';
+  }
+  return 'none';
 }

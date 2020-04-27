@@ -1,4 +1,11 @@
-import { BoardCoordinates, MovableSquares, emptyMovableSquares, getAvailableMoveSquares, GameBoard } from "GameBoard";
+import {
+  BoardCoordinates,
+  MovableSquares,
+  emptyMovableSquares,
+  getAvailableMoveSquares,
+  GameBoard,
+  BoardSquare,
+} from "GameBoard";
 import { MoveSet } from "MoveSet";
 import { Player } from "Player";
 
@@ -48,5 +55,37 @@ export class GamePiece {
     } else {
       console.log(`Cannot update potential moves of ${this.colour}'s ${this.name} as it does have a valid position.`)
     }
+  }
+
+  reducePotentialMovesToValidMoves(legalCoordinates: Array<BoardCoordinates>) {
+    this.potentialMoves.standardMovableSquares.stepMovableSquares =
+      this.potentialMoves.standardMovableSquares.stepMovableSquares.filter(square => legalCoordinates.includes(square.coordinates));
+    this.potentialMoves.standardMovableSquares.jumpMovableSquares =
+      this.potentialMoves.standardMovableSquares.jumpMovableSquares.filter(square => legalCoordinates.includes(square.coordinates));
+    this.potentialMoves.standardMovableSquares.slideMovableSquares =
+      this.potentialMoves.standardMovableSquares.slideMovableSquares.filter(square => legalCoordinates.includes(square.coordinates));
+    this.potentialMoves.standardMovableSquares.jumpSlideMovableSquares =
+      this.potentialMoves.standardMovableSquares.jumpSlideMovableSquares.filter(square => legalCoordinates.includes(square.coordinates));
+    this.potentialMoves.strikeSquares =
+      this.potentialMoves.strikeSquares.filter(square => legalCoordinates.includes(square.coordinates));
+    this.potentialMoves.commandTargetSquares =
+      this.potentialMoves.commandTargetSquares.filter(square => legalCoordinates.includes(square.coordinates));
+    if (this.potentialMoves.commandTargetSquares.length === 0) {
+      this.potentialMoves.commandSelectSquares = Array<BoardSquare>();
+    }
+  }
+
+  clearPotentialMoves() {
+    this.potentialMoves = emptyMovableSquares();
+  }
+
+  canMove() {
+    return this.potentialMoves.standardMovableSquares.stepMovableSquares.length > 0 ||
+      this.potentialMoves.standardMovableSquares.jumpMovableSquares.length > 0 ||
+      this.potentialMoves.standardMovableSquares.slideMovableSquares.length > 0 ||
+      this.potentialMoves.standardMovableSquares.jumpSlideMovableSquares.length > 0 ||
+      this.potentialMoves.strikeSquares.length > 0 ||
+      (this.potentialMoves.commandSelectSquares.length > 0 &&
+      this.potentialMoves.commandTargetSquares.length > 0);
   }
 }

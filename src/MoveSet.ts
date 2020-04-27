@@ -12,7 +12,7 @@ import {
   boardSquareContainsFriendlyPiece,
   BoardCoordinates,
   areCoordinatesValidForMove,
-  coordinatesInSelection
+  coordinatesAreInSelection
 } from "GameBoard";
 import { Player } from "Player";
 
@@ -139,7 +139,7 @@ export class MoveSet {
         if (areCoordinatesOnBoard(newCoordinates)) {
           const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));
           if (!!newBoardSquare) {
-            if (blockedCoordinates && coordinatesInSelection(blockedCoordinates, newCoordinates)) {
+            if (blockedCoordinates && coordinatesAreInSelection(blockedCoordinates, newCoordinates)) {
               distance++;
             } else if (boardSquareIsEmpty(newBoardSquare)) {
               legalSquares.push(newBoardSquare);
@@ -177,7 +177,7 @@ export class MoveSet {
         if (areCoordinatesOnBoard(newCoordinates)) {
           const newBoardSquare = gameBoard.find(square => coordinatesEqual(square.coordinates, newCoordinates));
           if (!!newBoardSquare) {
-            if (blockedCoordinates && coordinatesInSelection(blockedCoordinates, newCoordinates)) {
+            if (blockedCoordinates && coordinatesAreInSelection(blockedCoordinates, newCoordinates)) {
               distance++;
             } else if (boardSquareIsEmpty(newBoardSquare)) {
               legalSquares.push(newBoardSquare);

@@ -15,13 +15,16 @@ import {
   emptyMovableSquares,
   getCoordinatesFromMovableSquares,
   isTheSameSquare,
-  coordinatesInSelection,
+  coordinatesAreInSelection,
   boardCoordinatesToString,
   getSquaresWithPlayersPieces,
   getCoordinatesFromMovableCommandSquares,
   getCoordinatesFromBoardSquares,
   getAllPiecesOnBoard,
   getTargettedCoordinatesFromMovableSquares,
+  getMoveTypeAttackingCoordinates,
+  calculateStraightLineDistanceBetweenCoordinates,
+  getAllCoordinatesBetweenPairOfCoordinates,
 } from 'GameBoard';
 import {
   Player,
@@ -244,14 +247,14 @@ class Game extends React.Component <{}, IGame> {
       case 'MovingPiece':
         if (coordinatesEqual(squareCoordinates, this.state.selectedSquare!.coordinates)) {
           this.unselectPiece();
-        } else if (coordinatesInSelection(getCoordinatesFromMovableSquares(this.state.movableSquares), squareCoordinates)) { 
+        } else if (coordinatesAreInSelection(getCoordinatesFromMovableSquares(this.state.movableSquares), squareCoordinates)) { 
           this.takeMove(squareCoordinates);
         }
         break;
       case 'CarryingOutCommand':
         if (coordinatesEqual(squareCoordinates, this.state.selectedSquare!.coordinates)) {
           this.unselectPiece();
-        } else if (coordinatesInSelection(getCoordinatesFromMovableCommandSquares(this.state.movableSquares), squareCoordinates)) { 
+        } else if (coordinatesAreInSelection(getCoordinatesFromMovableCommandSquares(this.state.movableSquares), squareCoordinates)) { 
           this.takeMove(squareCoordinates);
         }
         break;
@@ -302,7 +305,8 @@ class Game extends React.Component <{}, IGame> {
     coordinatesEqual(square.coordinates, squareCoordinates) ? {...square, piece: gamePiece} : square);
 
     if (nextGamePhase === 'ChoosingMove') {
-      updatedBoard = this.updatePieceMoves(updatedBoard);
+      const allPieces = getAllPiecesOnBoard(updatedBoard);
+      updatedBoard = this.updatePieceMoves(updatedBoard, allPieces);
     }
 
     this.setState({
@@ -370,11 +374,12 @@ class Game extends React.Component <{}, IGame> {
         console.log(`Invalid move type`);
     }
     let newGamePhase = 'ChoosingMove' as GamePhase;
-    const updatedBoardWithPieceMoves = this.updatePieceMoves(updatedBoard);
-    const playerIsOnGuard = this.isPlayerOnGuard(updatedBoardWithPieceMoves);
+    const allPieces = getAllPiecesOnBoard(updatedBoard);
+    let updatedBoardWithPieceMoves = this.updatePieceMoves(updatedBoard, allPieces);
+    const playerIsOnGuard = this.isPlayerOnGuard(updatedBoardWithPieceMoves, allPieces);
     if (playerIsOnGuard) {
-      const opponentHasWon = !this.canPlayerEscapeGuard(updatedBoardWithPieceMoves);
-      if (opponentHasWon) {
+      updatedBoardWithPieceMoves = this.updateMovesToEscapeGuard(updatedBoardWithPieceMoves, allPieces);
+      if (!this.canPlayerMove(allPieces)) {
         newGamePhase = null;
       }
     }
@@ -464,8 +469,7 @@ class Game extends React.Component <{}, IGame> {
   }
 
   // TODO refactor
-  updatePieceMoves(gameBoard: GameBoard) {
-    const allPieces = getAllPiecesOnBoard(gameBoard);
+  updatePieceMoves(gameBoard: GameBoard, allPieces: GamePiece[]) {
     const playerToMove = getWaitingPlayer(this.state.players, this.state.currentPlayer);
     const opponent = this.state.currentPlayer;
 
@@ -498,8 +502,7 @@ class Game extends React.Component <{}, IGame> {
     return gameBoard;
   }
 
-  isPlayerOnGuard(gameBoard: GameBoard) {
-    const allPieces = getAllPiecesOnBoard(gameBoard);
+  isPlayerOnGuard(gameBoard: GameBoard, allPieces: GamePiece[]) {
     const playerToMove = getWaitingPlayer(this.state.players, this.state.currentPlayer);
     const opponentsPieces = allPieces.filter(piece => piece.colour === this.state.currentPlayer.colour);
 
@@ -512,11 +515,11 @@ class Game extends React.Component <{}, IGame> {
       ...opponentsPieces.flatMap(piece => getTargettedCoordinatesFromMovableSquares(piece.potentialMoves)),
     ].filter((square, index, array) => index === array.indexOf(square));
 
-    return coordinatesInSelection(coordinatesAttackedByOpponent, playerToMovesLeader.position!);    
+    return coordinatesAreInSelection(coordinatesAttackedByOpponent, playerToMovesLeader.position!);    
   }
 
-  canPlayerEscapeGuard(gameBoard: GameBoard) {
-    const allPieces = getAllPiecesOnBoard(gameBoard);
+  // TODO handle if allowed to draw from bag
+  updateMovesToEscapeGuard(gameBoard: GameBoard, allPieces: GamePiece[]) {
     const playerToMove = getWaitingPlayer(this.state.players, this.state.currentPlayer);
     const opponentsPieces = allPieces.filter(piece => piece.colour === this.state.currentPlayer.colour);
     const playerToMovesNonLeaderPieces = allPieces.filter(piece => piece.colour === playerToMove.colour && !piece.isLeader);
@@ -524,38 +527,61 @@ class Game extends React.Component <{}, IGame> {
     const playerToMovesLeader = allPieces.find(piece => piece.colour === playerToMove.colour && piece.isLeader);
     if (!playerToMovesLeader) {
       console.log(`Player ${playerToMove.colour} has no leader`);
-      return false;
+      return gameBoard;
+    }
+    if (!playerToMovesLeader.position) {
+      console.log(`Player ${playerToMove.colour} does not have a valid position`);
+      return gameBoard;
     }
 
-    // can move Duke to safe square
-    if (getCoordinatesFromMovableSquares(playerToMovesLeader.potentialMoves).length > 0) {
-      return true;
-    }
-
-    // can take attacking piece (only if 1 piece attacking)
-    // TODO handle Command - taking Command piece may already be covered, but need to handle taking piece if it's only one that can be commanded
     const piecesAttackingLeader = opponentsPieces.filter(
-      piece => coordinatesInSelection(
+      piece => coordinatesAreInSelection(
         getTargettedCoordinatesFromMovableSquares(piece.potentialMoves), playerToMovesLeader.position!
       )
     );
-
-    if (piecesAttackingLeader.length === 1 && playerToMovesNonLeaderPieces.some(
-      piece => coordinatesInSelection(
-        getTargettedCoordinatesFromMovableSquares(piece.potentialMoves), piecesAttackingLeader[0].position!
-      )
-    )) {
-      return true;
+    
+    if (piecesAttackingLeader.length > 1) {
+      // handle 2 pieces in same line - one with JS, then one with slide, 1+ free space (to block), then Duke
+      // any other case, remove all non-leader moves and return
     }
 
-    // TODO can put piece in way of attack
-    // NOTE it is possible to block attack when 2 pieces are attacking if they are in same line - one with JS, then one with slide, 1+ free space (to block), then Duke
-    // Jumps can't be blocked
-    // Steps and Slides can be blocked as long as piece isn't next to Duke
-    // Jump Slide - jump can't be blocked but slide can be, as long as 1+ square between jump landing and Duke
+    const pieceAttackingLeader = piecesAttackingLeader[0];
 
+    const coordinatesToAttack = new Array<BoardCoordinates>();
+    coordinatesToAttack.push(pieceAttackingLeader.position!);
 
-    return false;
+    const moveTypeAttackingLeader = getMoveTypeAttackingCoordinates(playerToMovesLeader.position!, pieceAttackingLeader.potentialMoves);
+
+    switch (moveTypeAttackingLeader) {
+      case 'Jump':
+      case 'Strike':
+        break;
+      case 'JumpSlide':
+        if (calculateStraightLineDistanceBetweenCoordinates(playerToMovesLeader.position, pieceAttackingLeader.position!) > 2) {
+          coordinatesToAttack.push(...getAllCoordinatesBetweenPairOfCoordinates(playerToMovesLeader.position, pieceAttackingLeader.position!));
+        }
+        break;
+      case 'Step':
+      case 'Slide':
+        if (calculateStraightLineDistanceBetweenCoordinates(playerToMovesLeader.position, pieceAttackingLeader.position!) > 1) {
+          coordinatesToAttack.push(...getAllCoordinatesBetweenPairOfCoordinates(playerToMovesLeader.position, pieceAttackingLeader.position!));
+        }
+        break;
+      case 'CommandMove':
+        if (pieceAttackingLeader.potentialMoves.commandSelectSquares.length === 1) {
+          coordinatesToAttack.push(pieceAttackingLeader.potentialMoves.commandSelectSquares[0].coordinates);
+        }
+        break;
+    }
+
+    playerToMovesNonLeaderPieces.forEach(piece => piece.reducePotentialMovesToValidMoves(coordinatesToAttack));
+
+    return gameBoard;
+  }
+
+  canPlayerMove(allPieces: GamePiece[]) {
+    const playersPieces = allPieces.filter(piece => piece.colour !== this.state.currentPlayer.colour);
+    return playersPieces.some(piece => piece.canMove());
   }
 
   render() {
