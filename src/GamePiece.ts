@@ -5,6 +5,7 @@ import {
   getAvailableMoveSquares,
   GameBoard,
   BoardSquare,
+  coordinatesAreInSelection,
 } from "GameBoard";
 import { MoveSet } from "MoveSet";
 import { Player } from "Player";
@@ -59,17 +60,17 @@ export class GamePiece {
 
   reducePotentialMovesToValidMoves(legalCoordinates: Array<BoardCoordinates>) {
     this.potentialMoves.standardMovableSquares.stepMovableSquares =
-      this.potentialMoves.standardMovableSquares.stepMovableSquares.filter(square => legalCoordinates.includes(square.coordinates));
+      this.potentialMoves.standardMovableSquares.stepMovableSquares.filter(square => coordinatesAreInSelection(legalCoordinates, square.coordinates));
     this.potentialMoves.standardMovableSquares.jumpMovableSquares =
-      this.potentialMoves.standardMovableSquares.jumpMovableSquares.filter(square => legalCoordinates.includes(square.coordinates));
+      this.potentialMoves.standardMovableSquares.jumpMovableSquares.filter(square => coordinatesAreInSelection(legalCoordinates, square.coordinates));
     this.potentialMoves.standardMovableSquares.slideMovableSquares =
-      this.potentialMoves.standardMovableSquares.slideMovableSquares.filter(square => legalCoordinates.includes(square.coordinates));
+      this.potentialMoves.standardMovableSquares.slideMovableSquares.filter(square => coordinatesAreInSelection(legalCoordinates, square.coordinates));
     this.potentialMoves.standardMovableSquares.jumpSlideMovableSquares =
-      this.potentialMoves.standardMovableSquares.jumpSlideMovableSquares.filter(square => legalCoordinates.includes(square.coordinates));
+      this.potentialMoves.standardMovableSquares.jumpSlideMovableSquares.filter(square => coordinatesAreInSelection(legalCoordinates, square.coordinates));
     this.potentialMoves.strikeSquares =
-      this.potentialMoves.strikeSquares.filter(square => legalCoordinates.includes(square.coordinates));
+      this.potentialMoves.strikeSquares.filter(square => coordinatesAreInSelection(legalCoordinates, square.coordinates));
     this.potentialMoves.commandTargetSquares =
-      this.potentialMoves.commandTargetSquares.filter(square => legalCoordinates.includes(square.coordinates));
+      this.potentialMoves.commandTargetSquares.filter(square => coordinatesAreInSelection(legalCoordinates, square.coordinates));
     if (this.potentialMoves.commandTargetSquares.length === 0) {
       this.potentialMoves.commandSelectSquares = Array<BoardSquare>();
     }

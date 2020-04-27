@@ -220,22 +220,22 @@ export const getAllCoordinatesBetweenPairOfCoordinates = (
   if (firstCoordinates.x === secondCoordinates.x) {
     const startY = Math.min(firstCoordinates.y, secondCoordinates.y);
     for (let i = 1; i < distance; i++) {
-      coordinatesToReturn.push({ x: firstCoordinates.x, y: startY + distance });
+      coordinatesToReturn.push({ x: firstCoordinates.x, y: startY + i });
     }
   } else if (firstCoordinates.y === secondCoordinates.y) {
     const startX = Math.min(firstCoordinates.x, secondCoordinates.x);
     for (let i = 1; i < distance; i++) {
-      coordinatesToReturn.push({ x: startX + distance, y: firstCoordinates.y });
+      coordinatesToReturn.push({ x: startX + i, y: firstCoordinates.y });
     }
   } else if (pairOfCoordinatesAreUpwardsDiagonal(firstCoordinates, secondCoordinates)) {
     const startCoordinates = getLeftmostOfCoordinates([firstCoordinates, secondCoordinates]);
     for (let i = 1; i < distance; i++) {
-      coordinatesToReturn.push({ x: startCoordinates.x + distance, y: startCoordinates.y - distance });
+      coordinatesToReturn.push({ x: startCoordinates.x + i, y: startCoordinates.y - i });
     }
-  } else if (pairOfCoordinatesAreUpwardsDiagonal(firstCoordinates, secondCoordinates)) {
+  } else if (pairOfCoordinatesAreDownwardsDiagonal(firstCoordinates, secondCoordinates)) {
     const startCoordinates = getLeftmostOfCoordinates([firstCoordinates, secondCoordinates]);
     for (let i = 1; i < distance; i++) {
-      coordinatesToReturn.push({ x: startCoordinates.x + distance, y: startCoordinates.y + distance });
+      coordinatesToReturn.push({ x: startCoordinates.x + i, y: startCoordinates.y + i });
     }
   }
   return coordinatesToReturn
