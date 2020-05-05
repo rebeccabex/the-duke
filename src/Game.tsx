@@ -552,9 +552,27 @@ class Game extends React.Component <{}, IGame> {
       )
     );
     
-    if (piecesAttackingLeader.length > 1) {
-      // handle 2 pieces in same line - one with JS, then one with slide, 1+ free space (to block), then Duke
-      // any other case, remove all non-leader moves and return
+    // NOTE: If the Duke is attacked by multiple pieces, the only way to escape Guard is by moving the Duke unless the attacking pieces are in a straight line.
+    // The only way this can happen is if there are two of the opponent's pieces next to each other,
+    // the first with Jump Slide, then one with Slide, then 1 or more free spaces (so that the player can block), then the player's Duke.
+    if (piecesAttackingLeader.length > 2) {
+      return [];
+    } else if (piecesAttackingLeader.length === 2) {
+      const moveTypesAttackingLeader = piecesAttackingLeader.map(piece => getMoveTypeAttackingCoordinates(playerToMovesLeader.position!, piece.potentialMoves));
+      if (moveTypesAttackingLeader.includes('JumpSlide') && moveTypesAttackingLeader.includes('Slide')) {
+        const positionOfJumpSlider = piecesAttackingLeader[moveTypesAttackingLeader.indexOf('JumpSlide')].position!;
+        const positionOfSlider = piecesAttackingLeader[moveTypesAttackingLeader.indexOf('Slide')].position!;
+        const coordinatesBetweenJumpSliderAndLeader = getAllCoordinatesBetweenPairOfCoordinates(positionOfJumpSlider, playerToMovesLeader.position);
+        if (coordinatesAreInSelection(coordinatesBetweenJumpSliderAndLeader, positionOfSlider)
+          && calculateStraightLineDistanceBetweenCoordinates(positionOfJumpSlider, positionOfSlider) === 1
+          && coordinatesBetweenJumpSliderAndLeader.length >= 2) {
+          return coordinatesBetweenJumpSliderAndLeader.filter(coordinates => !coordinatesEqual(coordinates, positionOfSlider));
+        } else {
+          return [];
+        }
+      } else {
+        return [];
+      }
     }
 
     const pieceAttackingLeader = piecesAttackingLeader[0];

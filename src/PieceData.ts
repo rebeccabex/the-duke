@@ -33,13 +33,13 @@ export class Duke extends GamePiece {
 export class Footsoldier extends GamePiece {
   constructor(colour: string) {
     super('Footsoldier', colour);
-    this.initialMoveSet.addMoves([
+    this.initialMoveSet.addSteps([
       {x: 0, y: 1},
       {x: 0, y: -1},
       {x: 1, y: 0},
       {x: -1, y: 0},
     ]);
-    this.flippedMoveSet.addMoves([
+    this.flippedMoveSet.addSteps([
       {x: 1, y: 1},
       {x: 1, y: -1},
       {x: -1, y: 1},
@@ -52,13 +52,13 @@ export class Footsoldier extends GamePiece {
 export class Pikeman extends GamePiece {
   constructor(colour: string) {
     super('Pikeman', colour);
-    this.initialMoveSet.addMoves([
+    this.initialMoveSet.addSteps([
       {x: 1, y: 1},
       {x: 2, y: 2},
       {x: -1, y: 1},
       {x: -2, y: 2},
     ]);
-    this.flippedMoveSet.addMoves([
+    this.flippedMoveSet.addSteps([
       {x: 0, y: -1},
       {x: 0, y: -2},
       {x: 0, y: 1},

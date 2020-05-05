@@ -41,7 +41,7 @@ export class MoveSet {
   }
 
   // TODO: Add ability to handle more human-readable descriptions 'Slide: Left'
-  addMoves(landingSquares: Array<RelativeCoordinates>) {
+  addSteps(landingSquares: Array<RelativeCoordinates>) {
     this.steps.push(...landingSquares);
   }
 
@@ -49,11 +49,11 @@ export class MoveSet {
     this.jumps.push(...landingSquares);
   }
 
-  addSlides(directions:  Array<RelativeCoordinates>) {
+  addSlides(directions: Array<RelativeCoordinates>) {
     this.slides.push(...directions);
   }
 
-  addJumpSlide(directions: Array<RelativeCoordinates>) {
+  addJumpSlides(directions: Array<RelativeCoordinates>) {
     this.jumpSlides.push(...directions);
   }
 
