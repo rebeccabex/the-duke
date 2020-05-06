@@ -182,6 +182,14 @@ export const getOrthogonallyAdjacentSquares = (currentSquare: BoardCoordinates):
   return neighbourhood;
 }
 
+export const coordinatesAreGuarded = (coordinates: BoardCoordinates, guardedCoordinates: BoardCoordinates[] = []): boolean => {
+  if (guardedCoordinates.length === 0) {
+    return false;
+  } else {
+    return coordinatesAreInSelection(guardedCoordinates, coordinates);
+  }
+}
+
 export const pairOfCoordinatesAreUpwardsDiagonal = (firstCoordinates: BoardCoordinates, secondCoordinates: BoardCoordinates): boolean => {
   return firstCoordinates.x + firstCoordinates.y === secondCoordinates.x + secondCoordinates.y;
 }
