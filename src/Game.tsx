@@ -139,17 +139,20 @@ class Game extends React.Component <{}, IGame> {
         break;
       case 'Playing':
         if (this.state.currentPlayerIsOnGuard) {
-          gameInstruction = 'GUARD!'
+          gameInstruction = 'GUARD! '
         }
         switch(this.state.gamePhase) {
           case 'ChoosingMove':
-            gameInstruction += ` ${currentPlayer.colour}, make a move or draw from your bag`;
+            gameInstruction += `${currentPlayer.colour}, make a move`;
+            if (this.state.canDrawFromBag) {
+              gameInstruction += ' or draw from your bag';
+            }
             break;
           case 'MovingPiece':
-            gameInstruction += ` ${currentPlayer.colour}, make a move`;
+            gameInstruction += `${currentPlayer.colour}, make a move`;
             break;
           case 'PlacingPiece': 
-            gameInstruction += ` ${currentPlayer.colour}, choose where to place your piece`;
+            gameInstruction += `${currentPlayer.colour}, choose where to place your ${this.state.pieceToPlace!.name}`;
             break;
         }
         break;
@@ -240,34 +243,40 @@ class Game extends React.Component <{}, IGame> {
   }
 
   selectSquare(squareCoordinates: BoardCoordinates) {
+    const { currentPlayer, movableSquares, legalSquares, pieceToPlace, selectedSquare } = this.state;
+
     switch(this.state.gamePhase) {
       case 'PlacingDuke':
-        this.placePiece(new Duke(this.state.currentPlayer.colour), this.state.currentPlayer, squareCoordinates);
+        if (coordinatesAreInSelection(legalSquares, squareCoordinates)) {
+          this.placePiece(new Duke(currentPlayer.colour), currentPlayer, squareCoordinates);
+        }
         break;
       case 'PlacingFootsoldier1':
       case 'PlacingFootsoldier2':
-        this.placePiece(new Footsoldier(this.state.currentPlayer.colour), this.state.currentPlayer, squareCoordinates);
+        if (coordinatesAreInSelection(legalSquares, squareCoordinates)) {
+          this.placePiece(new Footsoldier(currentPlayer.colour), currentPlayer, squareCoordinates);
+        }
         break;
       case 'ChoosingMove':
         this.selectPiece(squareCoordinates);
         break;
       case 'MovingPiece':
-        if (coordinatesEqual(squareCoordinates, this.state.selectedSquare!.coordinates)) {
+        if (coordinatesEqual(squareCoordinates, selectedSquare!.coordinates)) {
           this.unselectPiece();
-        } else if (coordinatesAreInSelection(getCoordinatesFromMovableSquares(this.state.movableSquares), squareCoordinates)) { 
+        } else if (coordinatesAreInSelection(getCoordinatesFromMovableSquares(movableSquares), squareCoordinates)) { 
           this.takeMove(squareCoordinates);
         }
         break;
       case 'CarryingOutCommand':
-        if (coordinatesEqual(squareCoordinates, this.state.selectedSquare!.coordinates)) {
+        if (coordinatesEqual(squareCoordinates, selectedSquare!.coordinates)) {
           this.unselectPiece();
-        } else if (coordinatesAreInSelection(getCoordinatesFromMovableCommandSquares(this.state.movableSquares), squareCoordinates)) { 
+        } else if (coordinatesAreInSelection(getCoordinatesFromMovableCommandSquares(movableSquares), squareCoordinates)) { 
           this.takeMove(squareCoordinates);
         }
         break;
       case 'PlacingPiece':
-        if (this.state.pieceToPlace) {
-          this.placePiece(this.state.pieceToPlace, this.state.currentPlayer, squareCoordinates);
+        if (pieceToPlace && coordinatesAreInSelection(legalSquares, squareCoordinates)) {
+          this.placePiece(pieceToPlace, currentPlayer, squareCoordinates);
         }
         break;
       default:
@@ -304,6 +313,7 @@ class Game extends React.Component <{}, IGame> {
       ? 'ChoosingMove'
       : this.getNextGamePhase(player);
     const nextGameStage = this.getNextGameStage(player);
+    const nextPlayer = getWaitingPlayer(this.state.players, this.state.currentPlayer);
 
     gamePiece.updatePosition(squareCoordinates);
 
@@ -315,17 +325,20 @@ class Game extends React.Component <{}, IGame> {
       updatedBoard = this.updatePieceMoves(updatedBoard, allPieces);
     }
 
-    const legalPlacingSquares = nextGamePhase === 'ChoosingMove'
+    const legalSquares = nextGamePhase === 'ChoosingMove'
     ? this.getCoordinatesWithNextPlayersPieces(updatedBoard)
-    : this.getLegalSquaresForNextStep(nextGamePhase, getWaitingPlayer(this.state.players, this.state.currentPlayer));
+    : this.getLegalSquaresForNextStep(nextGamePhase, nextPlayer);
     
+    const canDrawFromBag = this.getLegalPlacingSquares(nextPlayer).length > 0 && nextPlayer.bagPieces.length > 0;
+
     this.setState({
       ...this.state,
       gameBoard: updatedBoard,
-      currentPlayer: getWaitingPlayer(this.state.players, this.state.currentPlayer),
+      currentPlayer: nextPlayer,
       gamePhase: nextGamePhase,
       gameStage: nextGameStage,
-      legalSquares: legalPlacingSquares,
+      legalSquares,
+      canDrawFromBag,
     });
   }
 
@@ -386,7 +399,7 @@ class Game extends React.Component <{}, IGame> {
     let updatedBoardWithPieceMoves = this.updatePieceMoves(updatedBoard, allPieces);
     const playerIsOnGuard = this.isPlayerOnGuard(updatedBoardWithPieceMoves, allPieces);
     let squaresToAttack = new Array<BoardCoordinates>();
-    let canDrawFromBag = true;
+    let canDrawFromBag = this.getLegalPlacingSquares(nextPlayer).length > 0 && nextPlayer.bagPieces.length > 0;
     if (playerIsOnGuard) {
       squaresToAttack = this.getMovableCoordinatesToEscapeGuard(allPieces);
       updatedBoardWithPieceMoves = this.updateMovesToEscapeGuard(updatedBoardWithPieceMoves, allPieces, squaresToAttack);
@@ -395,7 +408,7 @@ class Game extends React.Component <{}, IGame> {
         newGamePhase = null;
       }
     }
-    const playerPieceSquares = this.getCoordinatesWithNextPlayersPieces(gameBoard);
+    const playerPieceSquares = this.getCoordinatesWithNextPlayersPieces(updatedBoardWithPieceMoves);
     this.setState({
       ...this.state,
       selectedSquare: null,
