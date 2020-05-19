@@ -1,10 +1,10 @@
 import {
   BoardCoordinates,
-   MovableSquares,
    coordinatesEqual,
    boardCoordinatesToString,
    getCoordinatesFromStandardMovableSquares,
 } from "GameBoard";
+import { MovableSquares } from "MoveHelper";
 
 export type GameStage = 'Start' | 'Setup' | 'Playing' | 'Finished';
 

@@ -1,14 +1,16 @@
 import {
   BoardCoordinates,
-  MovableSquares,
-  emptyMovableSquares,
-  getAvailableMoveSquares,
   GameBoard,
   BoardSquare,
   coordinatesAreInSelection,
 } from "GameBoard";
 import { MoveSet } from "MoveSet";
 import { Player } from "Player";
+import {
+  MovableSquares,
+  emptyMovableSquares,
+  getAvailableMoveSquares,
+} from "MoveHelper";
 
 export class GamePiece {
   name: string;

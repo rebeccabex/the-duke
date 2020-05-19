@@ -1,7 +1,6 @@
 import { GamePiece } from "GamePiece";
 import { Player } from "Player";
-import { MoveSet } from "MoveSet";
-import { AllMovementTypes } from "GamePhases";
+import { StandardMovableSquares, MovableSquares } from "MoveHelper";
 
 export type GameBoard = Array<BoardSquare>;
 
@@ -19,36 +18,6 @@ export const createGameBoard = (): Array<BoardSquare>  => {
 export type BoardSquare = {
   coordinates: BoardCoordinates;
   piece: GamePiece | null;
-}
-
-export type StandardMovableSquares = {
-  stepMovableSquares: Array<BoardSquare>,
-  jumpMovableSquares: Array<BoardSquare>,
-  slideMovableSquares: Array<BoardSquare>,
-  jumpSlideMovableSquares: Array<BoardSquare>,
-}
-
-export type MovableSquares = {
-  standardMovableSquares: StandardMovableSquares;
-  strikeSquares: Array<BoardSquare>;
-  commandSelectSquares: Array<BoardSquare>;
-  commandTargetSquares: Array<BoardSquare>;
-  commandStartSquare: BoardSquare | null;
-}
-
-export const emptyMovableSquares = (): MovableSquares => {
-  return {
-    standardMovableSquares: {
-      stepMovableSquares: Array<BoardSquare>(),
-      jumpMovableSquares: Array<BoardSquare>(),
-      slideMovableSquares: Array<BoardSquare>(),
-      jumpSlideMovableSquares: Array<BoardSquare>(),
-    },
-    strikeSquares: Array<BoardSquare>(),
-    commandSelectSquares: Array<BoardSquare>(),
-    commandTargetSquares: Array<BoardSquare>(),
-    commandStartSquare: null,
-  };
 }
 
 export type BoardCoordinates = {x: number, y: number};
@@ -69,6 +38,10 @@ export const boardSquareContainsEnemy = (boardSquare: BoardSquare, currentPlayer
 
 export const boardSquareContainsFriendlyPiece = (boardSquare: BoardSquare, currentPlayer: Player): boolean => {
   return boardSquare.piece !== null && boardSquare.piece.colour === currentPlayer.colour;
+}
+
+export const coordinatesAreEmpty = (board: GameBoard, coordinates: BoardCoordinates): boolean => {
+  return board.some(square => coordinatesEqual(square.coordinates, coordinates) && !square.piece);
 }
 
 export const getAllPiecesOnBoard = (board: GameBoard): Array<GamePiece> => {
@@ -168,12 +141,12 @@ export const coordinatesAreInBoardSquareSelection = (selection: BoardSquare[], c
   return selection.some(square => coordinatesEqual(square.coordinates, coordinates));
 }
 
-export const getOrthogonallyAdjacentSquares = (currentSquare: BoardCoordinates): BoardCoordinates[] => {
+export const getOrthogonallyAdjacentCoordinates = (currentCoordinates: BoardCoordinates): BoardCoordinates[] => {
   var neighbourhood = [];
 
   for (var i = -1; i < 2; i++){
     for (var j = -1; j < 2; j++){
-      const coordinates = {x: currentSquare.x + i, y: currentSquare.y + j};
+      const coordinates = {x: currentCoordinates.x + i, y: currentCoordinates.y + j};
       if (Math.abs(i) !== Math.abs(j) && areCoordinatesOnBoard(coordinates)) {
         neighbourhood.push(coordinates);
       }
@@ -259,64 +232,4 @@ export const areCoordinatesValidForMove = (coordinates: BoardCoordinates, blocke
 
 export const returnValidCoordinatesFromRange = (range: BoardCoordinates[]): BoardCoordinates[] => {
   return range.filter(coordinates => areCoordinatesOnBoard(coordinates));
-}
-
-export const getAvailableMoveSquares = (
-  moveSet: MoveSet,
-  currentCoordinates: BoardCoordinates,
-  gameBoard: GameBoard,
-  currentPlayer: Player,
-  playerIsWaiting: boolean = false,
-  blockedCoordinates?: Array<BoardCoordinates>,
-): MovableSquares => {
-  const movableSquares = emptyMovableSquares();
-  movableSquares.standardMovableSquares.stepMovableSquares.push(
-    ...moveSet.getLegalTargetSquaresForSteps(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting, blockedCoordinates)
-  );
-  movableSquares.standardMovableSquares.jumpMovableSquares.push(
-    ...moveSet.getLegalTargetSquaresForJumps(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting, blockedCoordinates)
-  );
-  movableSquares.standardMovableSquares.slideMovableSquares.push(
-    ...moveSet.getLegalTargetSquaresForSlides(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting, blockedCoordinates)
-  );
-  movableSquares.standardMovableSquares.jumpSlideMovableSquares.push(
-    ...moveSet.getLegalTargetSquaresForJumpSlides(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting, blockedCoordinates)
-  );
-  movableSquares.strikeSquares.push(
-    ...moveSet.getLegalTargetSquaresForStrikes(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting)
-  );
-  movableSquares.commandSelectSquares.push(
-    ...moveSet.getLegalPickUpSquaresForCommands(currentCoordinates, gameBoard, currentPlayer)
-  );
-  if (movableSquares.commandSelectSquares.length > 0) {
-    movableSquares.commandTargetSquares.push(
-      ...moveSet.getLegalMoveToSquaresForCommands(currentCoordinates, gameBoard, currentPlayer, playerIsWaiting)
-    );
-  }
-  return movableSquares;
-}
-
-export const getMoveTypeAttackingCoordinates = (coordinates: BoardCoordinates, movableSquares: MovableSquares): AllMovementTypes => {
-  if (coordinatesAreInBoardSquareSelection(movableSquares.strikeSquares, coordinates)) {
-    return 'Strike';
-  }
-  if (coordinatesAreInBoardSquareSelection(movableSquares.commandSelectSquares, coordinates)) {
-    return 'CommandSelect';
-  }
-  if (coordinatesAreInBoardSquareSelection(movableSquares.commandTargetSquares, coordinates)) {
-    return 'CommandMove';
-  }
-  if (coordinatesAreInBoardSquareSelection(movableSquares.standardMovableSquares.stepMovableSquares, coordinates)) {
-    return 'Step';
-  }
-  if (coordinatesAreInBoardSquareSelection(movableSquares.standardMovableSquares.jumpMovableSquares, coordinates)) {
-    return 'Jump';
-  }
-  if (coordinatesAreInBoardSquareSelection(movableSquares.standardMovableSquares.slideMovableSquares, coordinates)) {
-    return 'Slide';
-  }
-  if (coordinatesAreInBoardSquareSelection(movableSquares.standardMovableSquares.jumpSlideMovableSquares, coordinates)) {
-    return 'JumpSlide';
-  }
-  return 'none';
 }

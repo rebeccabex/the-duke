@@ -8,23 +8,18 @@ import {
   GameBoard,
   coordinatesEqual,
   createGameBoard,
-  getOrthogonallyAdjacentSquares,
+  getOrthogonallyAdjacentCoordinates,
   BoardSquare,
-  getAvailableMoveSquares,
-  MovableSquares,
-  emptyMovableSquares,
   getCoordinatesFromMovableSquares,
   isTheSameSquare,
   coordinatesAreInSelection,
   boardCoordinatesToString,
-  getSquaresWithPlayersPieces,
   getCoordinatesFromMovableCommandSquares,
-  getCoordinatesFromBoardSquares,
   getAllPiecesOnBoard,
   getTargettedCoordinatesFromMovableSquares,
-  getMoveTypeAttackingCoordinates,
   calculateStraightLineDistanceBetweenCoordinates,
   getAllCoordinatesBetweenPairOfCoordinates,
+  coordinatesAreEmpty,
 } from 'GameBoard';
 import {
   Player,
@@ -35,6 +30,12 @@ import {
 } from 'Player';
 import { GamePiece } from 'GamePiece';
 import { Duke, Footsoldier, BagPieceList, createNewPiece } from 'PieceData';
+import { GameControls } from 'GameControls';
+import {
+  MovableSquares,
+  emptyMovableSquares,
+  getMoveTypeAttackingCoordinates,
+} from 'MoveHelper';
 
 interface IGame {
   players: Player[],
@@ -44,7 +45,7 @@ interface IGame {
   startPlayer: Player,
   gameBoard: GameBoard,
   selectedSquare: BoardSquare | null,
-  legalSquares: Array<BoardCoordinates>,
+  legalCoordinates: Array<BoardCoordinates>,
   movableSquares: MovableSquares,
   pieceToPlace: GamePiece | null,
   currentPlayerIsOnGuard: boolean,
@@ -66,7 +67,7 @@ class Game extends React.Component <{}, IGame> {
       currentPlayer: blackPlayer,
       gameBoard: createGameBoard(),
       selectedSquare: null,
-      legalSquares: [],
+      legalCoordinates: [],
       startPlayer: blackPlayer,
       movableSquares: emptyMovableSquares(),
       pieceToPlace: null,
@@ -90,7 +91,7 @@ class Game extends React.Component <{}, IGame> {
       ...this.state,
       gameStage: 'Setup',
       gamePhase: 'PlacingDuke',
-      legalSquares: FirstStartingPositions,
+      legalCoordinates: FirstStartingPositions,
       currentPlayer: this.state.startPlayer,
       players: playersWithBagPieces,
     });
@@ -121,47 +122,6 @@ class Game extends React.Component <{}, IGame> {
     return <div>{bags}</div>;
   }
 
-  setGameControls() {
-    const { players, currentPlayer } = this.state;
-    var gameInstruction = '';
-    switch(this.state.gameStage) {
-      case 'Start':
-        return <button className="start-button" onClick={this.startGame}>{'Start game'}</button>;
-      case 'Setup':
-        switch(this.state.gamePhase) {
-          case 'PlacingDuke':
-            gameInstruction = `${currentPlayer.colour}, choose where to place your Duke`;
-            break;
-          case 'PlacingFootsoldier1':
-          case 'PlacingFootsoldier2':
-            gameInstruction = `${currentPlayer.colour}, choose where to place your Footsoldier`;
-        }
-        break;
-      case 'Playing':
-        if (this.state.currentPlayerIsOnGuard) {
-          gameInstruction = 'GUARD! '
-        }
-        switch(this.state.gamePhase) {
-          case 'ChoosingMove':
-            gameInstruction += `${currentPlayer.colour}, make a move`;
-            if (this.state.canDrawFromBag) {
-              gameInstruction += ' or draw from your bag';
-            }
-            break;
-          case 'MovingPiece':
-            gameInstruction += `${currentPlayer.colour}, make a move`;
-            break;
-          case 'PlacingPiece': 
-            gameInstruction += `${currentPlayer.colour}, choose where to place your ${this.state.pieceToPlace!.name}`;
-            break;
-        }
-        break;
-      case 'Finished':
-        gameInstruction = `Congratulations, ${getWaitingPlayer(players, currentPlayer).colour}`;
-    }
-    return <div className='game-instruction'>{gameInstruction}</div>;
-  }
-
   getPieceOnSquare(coordinates: BoardCoordinates): GamePiece | null {
     var squareOrUndefined = this.state.gameBoard.find(square => coordinatesEqual(square.coordinates, coordinates));
     return (squareOrUndefined === undefined || squareOrUndefined === null ? null : squareOrUndefined.piece);
@@ -179,10 +139,10 @@ class Game extends React.Component <{}, IGame> {
       return [];
     }
 
-    let orthogonalCoordinates = getOrthogonallyAdjacentSquares(dukePosition.coordinates);
+    let orthogonalCoordinates = getOrthogonallyAdjacentCoordinates(dukePosition.coordinates);
 
     return orthogonalCoordinates.filter(
-      coordinates => this.isEmptySquare(coordinates) &&
+      coordinates => coordinatesAreEmpty(this.state.gameBoard, coordinates) &&
       (!this.state.currentPlayerIsOnGuard || coordinatesAreInSelection(this.state.coordinatesToBlockGuard, coordinates))
     );
   }
@@ -199,19 +159,6 @@ class Game extends React.Component <{}, IGame> {
 
   getCoordinatesWithNextPlayersPieces(gameBoard: GameBoard = this.state.gameBoard) {
     return this.getCoordinatesWithPlayersPieces(getWaitingPlayer(this.state.players, this.state.currentPlayer), gameBoard);
-  }
-
-  getLegalPieceMovingSquares(clickedSquare: BoardSquare) {
-    const { gameBoard, currentPlayer } = this.state;
-    if (!!clickedSquare) {
-      const selectedPiece = clickedSquare.piece;
-      if (!!selectedPiece) {
-        const currentMoveSet = selectedPiece.isFlipped ? selectedPiece.flippedMoveSet: selectedPiece.initialMoveSet;
-        return getAvailableMoveSquares(currentMoveSet, clickedSquare.coordinates, gameBoard, currentPlayer);
-      }
-    }
-    console.log('No piece selected');
-    return emptyMovableSquares();
   }
 
   getNextGamePhase(player: Player) {
@@ -243,7 +190,7 @@ class Game extends React.Component <{}, IGame> {
   }
 
   selectSquare(squareCoordinates: BoardCoordinates) {
-    const { currentPlayer, movableSquares, legalSquares, pieceToPlace, selectedSquare } = this.state;
+    const { currentPlayer, movableSquares, legalCoordinates: legalSquares, pieceToPlace, selectedSquare } = this.state;
 
     switch(this.state.gamePhase) {
       case 'PlacingDuke':
@@ -293,7 +240,7 @@ class Game extends React.Component <{}, IGame> {
         selectedSquare: clickedSquare === undefined ? null : clickedSquare,
         gamePhase: 'MovingPiece',
         movableSquares: movableSquares,
-        legalSquares: getCoordinatesFromMovableSquares(movableSquares),
+        legalCoordinates: getCoordinatesFromMovableSquares(movableSquares),
       });
     }
   }
@@ -304,7 +251,7 @@ class Game extends React.Component <{}, IGame> {
       selectedSquare: null,
       gamePhase: 'ChoosingMove',
       movableSquares: emptyMovableSquares(),
-      legalSquares: this.getCoordinatesWithCurrentPlayersPieces(),
+      legalCoordinates: this.getCoordinatesWithCurrentPlayersPieces(),
     });
   }
 
@@ -325,9 +272,9 @@ class Game extends React.Component <{}, IGame> {
       updatedBoard = this.updatePieceMoves(updatedBoard, allPieces);
     }
 
-    const legalSquares = nextGamePhase === 'ChoosingMove'
+    const legalCoordinates = nextGamePhase === 'ChoosingMove'
     ? this.getCoordinatesWithNextPlayersPieces(updatedBoard)
-    : this.getLegalSquaresForNextStep(nextGamePhase, nextPlayer);
+    : this.getLegalCoordinatesForNextStep(nextGamePhase, nextPlayer);
     
     const canDrawFromBag = this.getLegalPlacingSquares(nextPlayer).length > 0 && nextPlayer.bagPieces.length > 0;
 
@@ -337,12 +284,12 @@ class Game extends React.Component <{}, IGame> {
       currentPlayer: nextPlayer,
       gamePhase: nextGamePhase,
       gameStage: nextGameStage,
-      legalSquares,
+      legalCoordinates,
       canDrawFromBag,
     });
   }
 
-  getLegalSquaresForNextStep(nextGamePhase: GamePhase, nextPlayer: Player) {
+  getLegalCoordinatesForNextStep(nextGamePhase: GamePhase, nextPlayer: Player) {
     switch (nextGamePhase) {
       case 'PlacingDuke':
         if (nextPlayer.colour === this.state.startPlayer.colour) {
@@ -415,7 +362,7 @@ class Game extends React.Component <{}, IGame> {
       gamePhase: newGamePhase,
       gameStage: newGamePhase ? this.state.gameStage : 'Finished',
       currentPlayer: getWaitingPlayer(this.state.players, this.state.currentPlayer),
-      legalSquares: playerPieceSquares,
+      legalCoordinates: playerPieceSquares,
       movableSquares: emptyMovableSquares(),
       gameBoard: updatedBoardWithPieceMoves,
       currentPlayerIsOnGuard: playerIsOnGuard,
@@ -435,7 +382,7 @@ class Game extends React.Component <{}, IGame> {
     this.setState({
       ...this.state,
       gamePhase: 'CarryingOutCommand',
-      legalSquares: getCoordinatesFromMovableCommandSquares(movableSquares),
+      legalCoordinates: getCoordinatesFromMovableCommandSquares(movableSquares),
       movableSquares,
     });
   }
@@ -483,7 +430,7 @@ class Game extends React.Component <{}, IGame> {
     this.setState({
       ...this.state,
       gamePhase: 'PlacingPiece',
-      legalSquares: this.getLegalPlacingSquares(this.state.currentPlayer),
+      legalCoordinates: this.getLegalPlacingSquares(this.state.currentPlayer),
       players: this.state.players.map(
         player => player === this.state.currentPlayer
         ? {
@@ -647,11 +594,13 @@ class Game extends React.Component <{}, IGame> {
     }
 
     return coordinatesToAttack.filter(
-      coordinates => coordinatesAreInSelection(getOrthogonallyAdjacentSquares(playerToMovesLeader.position!), coordinates)
+      coordinates => coordinatesAreInSelection(getOrthogonallyAdjacentCoordinates(playerToMovesLeader.position!), coordinates)
     ).length > 0;
   }
 
   render() {
+    const waitingPlayer = getWaitingPlayer(this.state.players, this.state.currentPlayer);
+
     return (
       <div className="game">
         <div className="game-board">
@@ -662,16 +611,23 @@ class Game extends React.Component <{}, IGame> {
             currentPlayer={this.state.currentPlayer}
             gameBoard={this.state.gameBoard}
             selectedSquare={this.state.selectedSquare}
-            legalSquares={this.state.legalSquares}
+            legalSquares={this.state.legalCoordinates}
             clickSquare={this.selectSquare}
           />
         </div>
         <div className="game-info">
           {this.createBags()}
         </div>
-        <div className="game-controls">
-          {this.setGameControls()}
-        </div>
+        <GameControls
+          currentPlayer={this.state.currentPlayer}
+          gamePhase={this.state.gamePhase}
+          gameStage={this.state.gameStage}
+          waitingPlayer={waitingPlayer}
+          currentPlayerIsOnGuard={this.state.currentPlayerIsOnGuard}
+          canDrawFromBag={this.state.canDrawFromBag}
+          pieceToPlace={this.state.pieceToPlace}
+          startGame={this.startGame}
+        />
       </div>
     );
   }
